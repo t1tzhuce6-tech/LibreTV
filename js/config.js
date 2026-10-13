@@ -20,9 +20,9 @@ const SITE_CONFIG = {
     version: '1.2.28'
 };
 
-const DEFAULT_SELECTED_APIS = ['ffzy', 'guangsu', 'xinlang'];
+const DEFAULT_SELECTED_APIS = ['ffzy', 'guangsu', 'xinlang', 'ysgc', 'baofeng', 'hhzy', 'z360'];
 const DEFAULT_API_MIGRATION_KEY = 'defaultApiMigrationVersion';
-const DEFAULT_API_MIGRATION_VERSION = '20261013-three-sources-v1';
+const DEFAULT_API_MIGRATION_VERSION = '20261013-seven-sources-v2';
 
 function escapeHtmlAttr(value) {
     return String(value ?? '')

@@ -83,6 +83,8 @@ test('verified customer API sources are available and invalid placeholders are r
   assert.equal(window.API_SITES.ysgc.name, '影视工厂');
   assert.equal(window.API_SITES.ysgc.api, 'https://cj.lziapi.com/api.php/provide/vod');
   assert.equal(window.API_SITES.ffzy.api, 'https://cj.ffzyapi.com/api.php/provide/vod');
+  assert.equal(window.API_SITES.baofeng.api, 'https://bfzyapi.com/api.php/provide/vod');
+  assert.equal(window.API_SITES.z360.api, 'https://360zy.com/api.php/provide/vod');
   assert.equal(window.API_SITES.jszy.api, 'https://jszyapi.com/api.php/provide/vod');
   assert.equal(window.API_SITES.wujin.api, 'https://api.wujinapi.com/api.php/provide/vod');
   assert.equal(window.API_SITES.maoyan.api, 'https://api.maoyanapi.top/api.php/provide/vod');
@@ -117,7 +119,7 @@ test('verified customer API sources are available and invalid placeholders are r
   assert.equal(window.API_SITES.siwa.api, 'https://siwazyw.tv/api.php/provide/vod');
   assert.equal(window.API_SITES.qiqi, undefined);
   assert.equal(window.API_SITES.testSource, undefined);
-  assert.deepEqual(Array.from(window.DEFAULT_SELECTED_APIS), ['ffzy', 'guangsu', 'xinlang']);
+  assert.deepEqual(Array.from(window.DEFAULT_SELECTED_APIS), ['ffzy', 'guangsu', 'xinlang', 'ysgc', 'baofeng', 'hhzy', 'z360']);
 });
 
 test('Docker image supports optional outbound proxy without changing default startup', async () => {
