@@ -1,4 +1,8 @@
 const CUSTOMER_SITES = {
+    ffzy: {
+        api: 'https://cj.ffzyapi.com/api.php/provide/vod',
+        name: '非凡资源',
+    },
     ysgc: {
         api: 'https://cj.lziapi.com/api.php/provide/vod',
         name: '影视工厂',

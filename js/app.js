@@ -162,16 +162,18 @@ function initializeDefaultSettings() {
         return;
     }
 
-    let changed = false;
-    defaultApiIds.forEach(apiId => {
-        if (!selectedAPIs.includes(apiId)) {
-            selectedAPIs.push(apiId);
-            changed = true;
-        }
-    });
-
-    if (changed) {
+    const previousDefaults = ['ysgc', 'jszy', 'wujin', 'maoyan'];
+    const pristinePreviousSelection = selectedAPIs.length === previousDefaults.length
+        && previousDefaults.every(apiId => selectedAPIs.includes(apiId));
+    if (pristinePreviousSelection) {
+        selectedAPIs = [...defaultApiIds];
         localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+    } else {
+        let changed = false;
+        defaultApiIds.forEach(apiId => {
+            if (!selectedAPIs.includes(apiId)) { selectedAPIs.push(apiId); changed = true; }
+        });
+        if (changed) localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
     }
     localStorage.setItem(DEFAULT_API_MIGRATION_KEY, DEFAULT_API_MIGRATION_VERSION);
 }
