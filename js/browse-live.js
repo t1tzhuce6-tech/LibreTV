@@ -7,7 +7,16 @@
     {name:'发现中国 Discovering China',group:'纪录',lang:'英文/多语',url:'https://amg01314-amg01314c8-distrotv-us-10218.playouts.now.amagi.tv/playlist/amg01314-cgtn-cgtndiscoveringchina-distrotvus/playlist.m3u8'},
     {name:'CGNTV 中文',group:'中文',lang:'中文节目',url:'https://d3e05csss9c272.cloudfront.net/out/v1/f0bf71c57581470fb9379f603e8f5d83/CGNWebLiveCN.m3u8'}
   ];
-  const sourceOrder=['ffzy','guangsu','xinlang','ysgc','baofeng','hhzy','z360','jszy','maoyan'];
+  const sourceOrder=(typeof DEFAULT_SELECTED_APIS!=='undefined'?DEFAULT_SELECTED_APIS:['ffzy','guangsu','xinlang','ysgc','baofeng','hhzy','z360']);
+  const liveProviders=[
+    {id:'iptvorg',name:'IPTV-org 中文频道',url:'https://iptv-org.github.io/iptv/languages/zho.m3u'},
+    {id:'guovin',name:'Guovin 央视／卫视',url:'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u'},
+    {id:'bestfan',name:'best-fan 高清候选',url:'https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_all.m3u8'},
+    {id:'freetv',name:'Free-TV 国际直播',url:'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8'},
+    {id:'original',name:'基础公开频道（4 台）',url:''},
+    {id:'custom',name:'自定义 M3U 订阅',url:''}
+  ];
+  const liveState={provider:'iptvorg',all:[],group:'',query:'',loaded:false,token:0,skipped:0};
   let state={source:'ffzy',category:'全部',typeId:'',page:1,pagecount:1,classes:[],mode:'browse',loading:false,sequence:0,hls:null};
   const $=id=>document.getElementById(id);
   function node(tag,cls,label){const e=document.createElement(tag);if(cls)e.className=cls;if(label!==undefined)e.textContent=label;return e;}
@@ -27,6 +36,7 @@
     $('ltModeBrowse').classList.toggle('is-active',mode==='browse');
     $('ltModeLive').classList.toggle('is-active',mode==='live');
     if(mode!=='live')resetPlayer();
+    if(mode==='live'&&!liveState.loaded)loadLiveProvider();
   }
   function categoryMatches(name,key){
     const rules={
@@ -85,31 +95,63 @@
       img.onerror=()=>{img.onerror=null;img.src=createImagePlaceholder('暂无封面');};
       card.appendChild(img);
       card.appendChild(node('span','lt-explore-card-title',item.vod_name||'未命名'));
-      card.appendChild(node('span','lt-explore-card-meta',(item.type_name||'')+' '+(item.vod_remarks||'')));
+      card.appendChild(node('span','lt-explore-card-meta',(item.type_name||'')+' · '+(item.vod_year||'')+' · '+(item.vod_remarks||'')));
       card.addEventListener('click',()=>{if(typeof showDetails==='function')showDetails(id,item.vod_name,sourceId);});
       box.appendChild(card);
     }
     if(!box.children.length)box.appendChild(node('p','lt-explore-empty','当前分类没有可显示的影片，可切换分类或影视源。'));
   }
+  function leafCategories(parentId){
+    const children=state.classes.filter(c=>String(c.type_pid)===String(parentId));
+    if(!children.length)return [String(parentId)];
+    return children.flatMap(c=>leafCategories(c.type_id));
+  }
+  function requestedCategories(){
+    if(state.typeId){
+      return [...new Set(leafCategories(state.typeId))].slice(0,12);
+    }
+    // An unfiltered newest page may be dominated by a single genre.
+    // Mix leaf categories from distinct parent groups instead.
+    const top=state.classes.filter(c=>String(c.type_pid)==='0'
+      && /电影|连续剧|电视剧|综艺|动漫|动画|短剧/.test(c.type_name));
+    const result=[];
+    top.forEach(c=>{
+      const leaves=leafCategories(c.type_id);
+      result.push(...leaves.slice(0,c.type_name.includes('电影')?3:2));
+    });
+    return [...new Set(result)].slice(0,10);
+  }
   async function loadList(){
     const req=++state.sequence;
     const box=$('ltBrowseCards');box.replaceChildren();
-    box.appendChild(node('p','lt-explore-empty','正在获取最新片单…'));
-    showMsg('当前为采集源更新列表，并非播放量热榜。');
+    box.appendChild(node('p','lt-explore-empty','正在汇总子分类片单…'));
+    showMsg('按片源更新时间显示，不是播放量热榜；父分类自动汇总子分类。');
     try{
       const context=getApiSearchContext(state.source);
       if(!context)throw new Error('未知源');
-      const url=context.apiBaseUrl+'?ac=videolist&pg='+state.page+(state.typeId?'&t='+encodeURIComponent(state.typeId):'');
-      const data=await fetchVodApiJson(url);
+      const ids=requestedCategories();
+      const endpoints=ids.length?ids.map(id=>context.apiBaseUrl+'?ac=videolist&pg='+state.page+'&t='+encodeURIComponent(id))
+        :[context.apiBaseUrl+'?ac=videolist&pg='+state.page];
+      const responses=await Promise.all(endpoints.map(url=>fetchVodApiJson(url).catch(()=>null)));
       if(req!==state.sequence)return;
-      if(!data||!Array.isArray(data.list))throw new Error('没有有效列表');
-      state.pagecount=Math.max(1,Number(data.pagecount)||1);
-      renderCards(normalizeApiList(data,state.source,context));
-      showMsg((API_SITES[state.source]?.name||'')+' · '+(state.category==='全部'?'全部最新':state.category)+' · 第 '+state.page+' / '+state.pagecount+' 页');
+      const good=responses.filter(data=>data&&Array.isArray(data.list));
+      if(!good.length)throw new Error('未收到有效分类结果');
+      const dataLists=good.filter(data=>data.list.length>0);
+      state.pagecount=Math.max(1,...dataLists.map(data=>Number(data.pagecount)||1));
+      const seen=new Set();const rows=[];
+      for(const data of dataLists)for(const item of data.list){
+        const id=String(item.vod_id||'');
+        if(!id||seen.has(id))continue;
+        seen.add(id);rows.push(item);
+      }
+      rows.sort((a,b)=>String(b.vod_time||'').localeCompare(String(a.vod_time||'')));
+      renderCards(normalizeApiList(rows.slice(0,84),state.source,context));
+      showMsg((API_SITES[state.source]?.name||'')+' · '+(state.category==='全部'?'多分类最新':state.category)
+        +' · 本页 '+rows.length+' 条 · 第 '+state.page+' / '+state.pagecount+' 页（更新排序，非热榜）');
     }catch(error){
       if(req!==state.sequence)return;
-      box.replaceChildren(node('p','lt-explore-empty','读取失败。请检查密码登录和片源状态，再切换来源重试。'));
-      showMsg('本次请求未成功，不代表该来源全部影片失效。');
+      box.replaceChildren(node('p','lt-explore-empty','分类读取失败。切换来源、子分类或刷新后重试。'));
+      showMsg('该分类请求未成功，无法据此判定整个片源无影片。');
     }
     $('ltPrevPage').disabled=state.page<=1;
     $('ltNextPage').disabled=state.page>=state.pagecount;
@@ -117,7 +159,7 @@
   function initSources(){
     const s=$('ltBrowseSource');
     sourceOrder.filter(validSource).forEach(id=>{
-      const o=node('option','',API_SITES[id].name);o.value=id;s.appendChild(o);
+      const o=node('option','','✅ 默认 · '+API_SITES[id].name);o.value=id;s.appendChild(o);
     });
     const remembered=setting('libretvBrowseSource');
     if(remembered&&validSource(remembered)&&sourceOrder.includes(remembered))state.source=remembered;
@@ -155,15 +197,95 @@
       });
     }else $('ltLiveStatus').textContent='此浏览器不支持播放 HLS 直播。';
   }
+  function parseM3U(raw){
+    const lines=String(raw||'').split(/\r?\n/);
+    const results=[];const seen=new Set();
+    let pending=null;let skipped=0;
+    for(const rawLine of lines){
+      const line=rawLine.trim();
+      if(line.startsWith('#EXTINF')){
+        const comma=line.lastIndexOf(',');
+        const title=comma>=0?line.slice(comma+1).trim():'未命名频道';
+        const group=/group-title="([^"]*)"/i.exec(line)?.[1]||'其他频道';
+        pending={name:title||'未命名频道',group,lang:''};
+      }else if(line&&!line.startsWith('#')&&pending){
+        if(/^https:\/\//i.test(line)){
+          const key=pending.name+'|'+line;
+          if(!seen.has(key)){results.push({...pending,url:line});seen.add(key);}
+        }else skipped++;
+        pending=null;
+      }
+    }
+    return {results:results.slice(0,5000),skipped};
+  }
   function renderLive(){
     const box=$('ltLiveChannels');box.replaceChildren();
-    liveChannels.forEach(c=>{
+    const group=$('ltLiveGroup');const groups=[...new Set(liveState.all.map(c=>c.group||'其他频道'))].sort();
+    group.replaceChildren();
+    const all=node('option','','全部分组');all.value='';group.appendChild(all);
+    groups.forEach(g=>{const o=node('option','',g);o.value=g;group.appendChild(o);});
+    if(groups.includes(liveState.group))group.value=liveState.group;
+    else {liveState.group='';group.value='';}
+    const term=liveState.query.trim().toLowerCase();
+    const filtered=liveState.all.filter(c=>(!liveState.group||c.group===liveState.group)
+      &&(!term||c.name.toLowerCase().includes(term)||c.group.toLowerCase().includes(term)));
+    const maxShow=220;
+    filtered.slice(0,maxShow).forEach(c=>{
       const b=node('button','lt-live-channel');b.type='button';
       b.appendChild(node('strong','',c.name));
-      b.appendChild(node('small','',c.group+' · '+c.lang+' · 含 1080P 档位'));
+      b.appendChild(node('small','',(c.group||'其他')+' · '+(c.lang||'HTTPS 线路')+' · 清晰度以播放为准'));
       b.addEventListener('click',()=>{box.querySelectorAll('button').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');startLive(c);});
       box.appendChild(b);
     });
+    if(!filtered.length)box.appendChild(node('p','lt-explore-empty','没有匹配的 HTTPS 频道，尝试其他订阅或关键词。'));
+    $('ltLiveCount').textContent='共 '+liveState.all.length+' 条 HTTPS 线路，匹配 '+filtered.length
+      +' 条；显示前 '+Math.min(maxShow,filtered.length)+' 条。已跳过 '+liveState.skipped+' 条非 HTTPS 线路。';
+  }
+  async function loadLiveProvider(){
+    const seq=++liveState.token;
+    resetPlayer();
+    const chosen=liveProviders.find(p=>p.id===liveState.provider);
+    liveState.all=[];liveState.group='';liveState.skipped=0;liveState.loaded=false;
+    $('ltLiveCount').textContent='正在从订阅提供者下载频道列表（不经你的 CF）…';
+    try{
+      if(chosen.id==='original'){liveState.all=liveChannels;}
+      else {
+        const url=chosen.id==='custom'?$('ltLiveCustomUrl').value.trim():chosen.url;
+        if(!/^https:\/\//i.test(url))throw new Error('只接受 HTTPS M3U 地址');
+        const controller=new AbortController();
+        const timeout=setTimeout(()=>controller.abort(),12000);
+        let response;
+        try{response=await fetch(url,{signal:controller.signal,cache:'no-store'});}
+        finally{clearTimeout(timeout);}
+        if(!response.ok)throw new Error('HTTP '+response.status);
+        const raw=await response.text();
+        if(seq!==liveState.token)return;
+        if(!raw.startsWith('#EXTM3U'))throw new Error('不是标准 M3U 格式');
+        const parsed=parseM3U(raw);
+        liveState.all=parsed.results;liveState.skipped=parsed.skipped;
+      }
+      if(seq!==liveState.token)return;
+      liveState.loaded=true;
+      renderLive();
+    }catch(error){
+      if(seq!==liveState.token)return;
+      $('ltLiveChannels').replaceChildren(node('p','lt-explore-empty','订阅加载失败。可能是 CORS、地区网络或订阅失效。切换其他提供者试试。'));
+      $('ltLiveCount').textContent='失败：'+error.message+'。播放器不会使用 CF 视频代理。';
+    }
+  }
+  function initLive(){
+    const select=$('ltLiveProvider');
+    for(const p of liveProviders){const o=node('option','',p.name);o.value=p.id;select.appendChild(o);}
+    select.value=liveState.provider;
+    select.addEventListener('change',()=>{
+      liveState.provider=select.value;
+      $('ltLiveCustomUrl').hidden=liveState.provider!=='custom';
+      $('ltLiveReload').hidden=liveState.provider!=='custom';
+      loadLiveProvider();
+    });
+    $('ltLiveGroup').addEventListener('change',e=>{liveState.group=e.target.value;renderLive();});
+    $('ltLiveQuery').addEventListener('input',e=>{liveState.query=e.target.value;renderLive();});
+    $('ltLiveReload').addEventListener('click',loadLiveProvider);
   }
   function syncSearchState(){
     const r=$('resultsArea');const root=$('ltExplore');
@@ -175,12 +297,12 @@
     const root=node('section','lt-explore');root.id='ltExplore';
     root.innerHTML='<div class="lt-explore-top"><div><h2>发现影片与高清电视</h2><p>切换资源浏览分类片单；直播直接连接频道源，视频不经 CF 中转。</p></div><div class="lt-explore-modes"><button id="ltModeBrowse" class="is-active" type="button">分类逛片</button><button id="ltModeLive" type="button">高清电视直播</button></div></div>'
       +'<div id="ltBrowseBody"><div class="lt-explore-controls"><label>影视源 <select id="ltBrowseSource"></select></label><label>细分类 <select id="ltBrowseCategory"></select></label></div><div id="ltBrowseCats" class="lt-explore-cats"></div><p id="ltBrowseStatus" class="lt-explore-status"></p><div id="ltBrowseCards" class="lt-explore-grid"></div><div class="lt-explore-paging"><button id="ltPrevPage" type="button">上一页</button><button id="ltNextPage" type="button">下一页</button></div></div>'
-      +'<div id="ltLiveBody" hidden><div class="lt-live-layout"><div id="ltLiveChannels" class="lt-live-channels"></div><div class="lt-live-player"><h3 id="ltLiveName">选择频道开始直播</h3><video id="ltLiveVideo" controls playsinline preload="none"></video><p id="ltLiveStatus">已检验所选频道的 HLS 主清单包含 1920×1080 选项；实际播放受网络和地区限制。</p><p class="lt-explore-note">直播媒体在你的设备上直接播放，不通过 Cloudflare 视频代理。</p></div></div></div>';
+      +'<div id="ltLiveBody" hidden><div class="lt-live-sourcebar"><label>直播订阅 <select id="ltLiveProvider"></select></label><label>频道分组 <select id="ltLiveGroup"></select></label><label>搜索 <input id="ltLiveQuery" placeholder="例如 CCTV、卫视、电影" type="search"></label><input id="ltLiveCustomUrl" hidden placeholder="填写 HTTPS M3U 订阅链接" type="url"><button id="ltLiveReload" hidden type="button">读取订阅</button><span id="ltLiveCount"></span></div><div class="lt-live-layout"><div id="ltLiveChannels" class="lt-live-channels"></div><div class="lt-live-player"><h3 id="ltLiveName">选择频道开始直播</h3><video id="ltLiveVideo" controls playsinline preload="none"></video><p id="ltLiveStatus">已检验所选频道的 HLS 主清单包含 1920×1080 选项；实际播放受网络和地区限制。</p><p class="lt-explore-note">直播媒体在你的设备上直接播放，不通过 Cloudflare 视频代理。</p></div></div></div>';
     const after=$('searchArea');if(!after)return;
     after.insertAdjacentElement('afterend',root);
     $('ltModeBrowse').addEventListener('click',()=>chooseMode('browse'));
     $('ltModeLive').addEventListener('click',()=>chooseMode('live'));
-    initSources();renderLive();syncSearchState();loadCategories();
+    initSources();initLive();syncSearchState();loadCategories();
     window.addEventListener('pagehide',resetPlayer);
   }
   document.addEventListener('DOMContentLoaded',start);
