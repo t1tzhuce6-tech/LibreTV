@@ -13,6 +13,10 @@
     {id:'guovin',name:'Guovin 央视／卫视',url:'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u'},
     {id:'bestfan',name:'best-fan 高清候选',url:'https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_all.m3u8'},
     {id:'freetv',name:'Free-TV 国际直播',url:'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8'},
+    // Live-only, taken from the public FanTaiYing/TVBox 0826.json mirror; type-3 VOD requires a separate Spider JAR runtime.
+    {id:'fty-v4',name:'饭太硬 · V4 聚合直播（镜像）',url:'https://raw.githubusercontent.com/wwb521/live/main/tv.m3u'},
+    {id:'fty-v6',name:'饭太硬 · V6 范明明（IPv6）',url:'https://raw.githubusercontent.com/fanmingming/live/refs/heads/main/tv/m3u/ipv6.m3u'},
+    {id:'fty-platform',name:'饭太硬 · 平台直播（HTTP）',url:'http://tv.iill.top/m3u/Live'},
     {id:'original',name:'基础公开频道（4 台）',url:''},
     {id:'custom',name:'自定义 M3U 订阅',url:''}
   ];
@@ -180,6 +184,9 @@
     $('ltLiveStatus').textContent='正在直连 '+channel.name+'（不经 Cloudflare 视频代理）…';
     $('ltLiveName').textContent=channel.name;
     const src=channel.url;
+    if(/^http:\/\//i.test(src) && location.protocol==='https:') {
+      $('ltLiveStatus').textContent='这是 HTTP 直播线路。已按要求保留，但 HTTPS 网页可能被浏览器阻止加载；视频不会转经 CF。';
+    }
     if(video.canPlayType('application/vnd.apple.mpegurl')){
       video.src=src;
       video.play().catch(()=>{$('ltLiveStatus').textContent='请点击播放器播放按钮。';});
@@ -209,7 +216,7 @@
         const group=/group-title="([^"]*)"/i.exec(line)?.[1]||'其他频道';
         pending={name:title||'未命名频道',group,lang:''};
       }else if(line&&!line.startsWith('#')&&pending){
-        if(/^https:\/\//i.test(line)){
+        if(/^https?:\/\//i.test(line)){
           const key=pending.name+'|'+line;
           if(!seen.has(key)){results.push({...pending,url:line});seen.add(key);}
         }else skipped++;
@@ -233,13 +240,13 @@
     filtered.slice(0,maxShow).forEach(c=>{
       const b=node('button','lt-live-channel');b.type='button';
       b.appendChild(node('strong','',c.name));
-      b.appendChild(node('small','',(c.group||'其他')+' · '+(c.lang||'HTTPS 线路')+' · 清晰度以播放为准'));
+      b.appendChild(node('small','',(c.group||'其他')+' · '+(c.url.startsWith('http://')?'HTTP · 浏览器可能拦截':(c.lang||'HTTPS'))+' · 清晰度以播放为准'));
       b.addEventListener('click',()=>{box.querySelectorAll('button').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');startLive(c);});
       box.appendChild(b);
     });
-    if(!filtered.length)box.appendChild(node('p','lt-explore-empty','没有匹配的 HTTPS 频道，尝试其他订阅或关键词。'));
-    $('ltLiveCount').textContent='共 '+liveState.all.length+' 条 HTTPS 线路，匹配 '+filtered.length
-      +' 条；显示前 '+Math.min(maxShow,filtered.length)+' 条。已跳过 '+liveState.skipped+' 条非 HTTPS 线路。';
+    if(!filtered.length)box.appendChild(node('p','lt-explore-empty','没有匹配的频道，尝试其他订阅或关键词。'));
+    $('ltLiveCount').textContent='共 '+liveState.all.length+' 条 HTTP/HTTPS 线路，匹配 '+filtered.length
+      +' 条；显示前 '+Math.min(maxShow,filtered.length)+' 条。已忽略 '+liveState.skipped+' 条不支持的协议。';
   }
   async function loadLiveProvider(){
     const seq=++liveState.token;
@@ -251,7 +258,7 @@
       if(chosen.id==='original'){liveState.all=liveChannels;}
       else {
         const url=chosen.id==='custom'?$('ltLiveCustomUrl').value.trim():chosen.url;
-        if(!/^https:\/\//i.test(url))throw new Error('只接受 HTTPS M3U 地址');
+        if(!/^https?:\/\//i.test(url))throw new Error('只接受 HTTP 或 HTTPS M3U 地址');
         const controller=new AbortController();
         const timeout=setTimeout(()=>controller.abort(),12000);
         let response;
