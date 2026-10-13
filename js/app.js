@@ -145,6 +145,12 @@ function getAvailableDefaultApiIds() {
 
 function initializeDefaultSettings() {
     const defaultApiIds = getAvailableDefaultApiIds();
+    // Personal deployment: keep only the marked default VOD sources active.
+    const visibleIds = selectedAPIs.filter(apiId => defaultApiIds.includes(apiId));
+    if (visibleIds.length !== selectedAPIs.length) {
+        selectedAPIs = visibleIds.length ? visibleIds : [...defaultApiIds];
+        localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
+    }
 
     if (!localStorage.getItem('hasInitializedDefaults')) {
         selectedAPIs = [...defaultApiIds];
@@ -230,7 +236,7 @@ function initAPICheckboxes() {
     // 创建普通API源的复选框
     Object.keys(API_SITES).forEach(apiKey => {
         const api = API_SITES[apiKey];
-        if (api.adult) return; // 跳过成人内容API，稍后添加
+        if (api.adult || !DEFAULT_SELECTED_APIS.includes(apiKey)) return; // 暂只展示默认源
 
         const checked = selectedAPIs.includes(apiKey);
 
@@ -241,7 +247,7 @@ function initAPICheckboxes() {
                    class="form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333]" 
                    ${checked ? 'checked' : ''} 
                    data-api="${apiKey}">
-            <label for="api_${apiKey}" class="ml-1 text-xs text-gray-400 truncate">${api.name}</label>
+            <label for="api_${apiKey}" class="ml-1 text-xs text-emerald-400 truncate">✅ 默认 · ${api.name}</label>
         `;
         normaldiv.appendChild(checkbox);
 
