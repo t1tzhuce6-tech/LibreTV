@@ -3,6 +3,14 @@ const CUSTOMER_SITES = {
         api: 'https://cj.ffzyapi.com/api.php/provide/vod',
         name: '非凡资源',
     },
+    baofeng: {
+        api: 'https://bfzyapi.com/api.php/provide/vod',
+        name: '暴风资源',
+    },
+    z360: {
+        api: 'https://360zy.com/api.php/provide/vod',
+        name: '360资源',
+    },
     ysgc: {
         api: 'https://cj.lziapi.com/api.php/provide/vod',
         name: '影视工厂',
