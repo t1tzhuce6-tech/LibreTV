@@ -147,7 +147,12 @@
     credits.append(source,' · 播放使用当前方案中已选的片源');
     body.append(bar,status,cards,credits);
     container.append(head,body);
-    target.insertAdjacentElement('beforebegin',container);
+    // Rankings must precede the long source-browse card grid, or they are buried below it.
+    const search=document.getElementById('searchArea');
+    if(search){
+      search.insertAdjacentElement('beforebegin',container);
+      container.insertAdjacentElement('afterend',target);
+    }else target.insertAdjacentElement('beforebegin',container);
     const results=document.getElementById('resultsArea');
     if(results){
       const observe=()=>{
