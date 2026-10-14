@@ -1,4 +1,4 @@
-const APP_VERSION = '20261014-long-v1';
+const APP_VERSION = '20261015-iqiyi-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -20,6 +20,7 @@ const APP_SHELL_ASSETS = [
   '/css/browse-live.css',
   '/css/profile-schemes.css',
   '/css/hot-list.css',
+  '/css/iqiyi-ranks.css',
   '/css/curated-lists.css',
   '/js/config.js',
   '/js/proxy-auth.js',
@@ -33,6 +34,7 @@ const APP_SHELL_ASSETS = [
   '/js/customer_site.js',
   '/js/content-policy.js',
   '/js/hot-list.js',
+  '/js/iqiyi-ranks.js',
   '/js/curated-lists.js',
   '/js/profile-manager.js',
   '/js/catalog-adapter.js',
