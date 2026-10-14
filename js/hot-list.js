@@ -104,16 +104,19 @@
     }
   }
   function setMode(value){
-    mode=value==='douban'?'douban':'hotlist';save(storeKey,mode);
-    document.body.classList.toggle('lt-rank-active',mode==='hotlist');
+    mode=['douban','curated'].includes(value)?value:'hotlist';save(storeKey,mode);
+    document.body.classList.toggle('lt-rank-active',mode!=='douban');
     const section=document.getElementById('ltHotListContent');
     if(section)section.hidden=mode!=='hotlist';
+    const curated=document.getElementById('ltCuratedContent');
+    if(curated)curated.hidden=mode!=='curated';
     document.querySelectorAll('[data-lt-recommend-mode]').forEach(button=>{
       const selected=button.dataset.ltRecommendMode===mode;
       button.classList.toggle('active',selected);
       button.setAttribute('aria-pressed',String(selected));
     });
     if(mode==='hotlist')loadChart(current);
+    else if(mode==='curated')window.LibreCurated?.show();
     else if(typeof enableHomeRecommendations==='function'&&read('doubanEnabled')!=='true')enableHomeRecommendations();
   }
   function init(){
@@ -123,7 +126,7 @@
     const head=el('div','lt-hotlist-head');
     const title=el('div','lt-hotlist-title','发现值得看的影视');
     const modes=el('div','lt-hotlist-modes');
-    for(const item of [{id:'hotlist',name:'真实影视榜单'},{id:'douban',name:'原豆瓣推荐'}]){
+    for(const item of [{id:'hotlist',name:'真实影视榜单'},{id:'curated',name:'主题片单（复制搜索）'},{id:'douban',name:'原豆瓣推荐'}]){
       const button=el('button','',item.name);button.type='button';button.dataset.ltRecommendMode=item.id;
       button.addEventListener('click',()=>setMode(item.id));modes.appendChild(button);
     }
@@ -146,7 +149,9 @@
     source.target='_blank';source.rel='noopener noreferrer';
     credits.append(source,' · 播放使用当前方案中已选的片源');
     body.append(bar,status,cards,credits);
-    container.append(head,body);
+    const curated=el('div','lt-hotlist-content');curated.id='ltCuratedContent';curated.hidden=true;
+    window.LibreCurated?.init(curated);
+    container.append(head,body,curated);
     // Rankings must precede the long source-browse card grid, or they are buried below it.
     const search=document.getElementById('searchArea');
     if(search){
@@ -163,7 +168,8 @@
     }
     const saved=read(boardKey);
     if(charts.some(c=>c.id===saved))current=saved;
-    setMode(read(storeKey)==='douban'?'douban':'hotlist');
+    const savedMode=read(storeKey);
+    setMode(['douban','curated'].includes(savedMode)?savedMode:'hotlist');
   }
   document.addEventListener('DOMContentLoaded',init);
 })();

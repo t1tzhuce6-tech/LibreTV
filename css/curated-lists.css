@@ -1,0 +1,6 @@
+/* Optional maintained community lists: click a title to copy, never modify playback. */
+.lt-curated-card .lt-curated-copy{margin:5px 8px 0;font-size:11px;color:#a7f3d0;line-height:1.4}
+.lt-curated-card:hover .lt-curated-copy{text-decoration:underline}
+.lt-curated-source{display:inline-block;margin:12px 0 0;color:#a5b4fc;text-decoration:underline;font-size:12px}
+#ltCuratedContent[hidden]{display:none!important}
+@media(max-width:640px){.lt-curated-card .lt-curated-copy{font-size:10px}}
