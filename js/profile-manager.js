@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   const PROFILE_KEY='libretv:active-preset';
-  const FIELDS=['selectedAPIs','customAPIs','libretvBrowseSource','libretvLiveProvider','doubanEnabled','yellowFilterEnabled'];
+  const FIELDS=['selectedAPIs','customAPIs','libretvBrowseSource','libretvLiveProvider','libretv:home-recommendation-mode','libretv:hot-list-board','doubanEnabled','yellowFilterEnabled'];
   const presets=[
     {id:'local',title:'方案一 · 原有配置',description:'原来的七个默认源，保留原界面与设置',theme:'classic'},
     {id:'managed',title:'方案二 · 自动维护订阅',description:'维护者健康源，打开网站时自动检查更新',theme:'mint'}

@@ -1,4 +1,4 @@
-const APP_VERSION = '20261014-filter-v1';
+const APP_VERSION = '20261014-rank-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -19,6 +19,7 @@ const APP_SHELL_ASSETS = [
   '/css/theme.css',
   '/css/browse-live.css',
   '/css/profile-schemes.css',
+  '/css/hot-list.css',
   '/js/config.js',
   '/js/proxy-auth.js',
   '/js/source-speed.js',
@@ -30,6 +31,7 @@ const APP_SHELL_ASSETS = [
   '/js/modal-accessibility.js',
   '/js/customer_site.js',
   '/js/content-policy.js',
+  '/js/hot-list.js',
   '/js/profile-manager.js',
   '/js/catalog-adapter.js',
   '/js/browse-live.js',
