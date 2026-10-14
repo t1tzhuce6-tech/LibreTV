@@ -1,4 +1,4 @@
-const APP_VERSION = '202610121036';
+const APP_VERSION = '20261014-profile-v2';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -17,6 +17,8 @@ const APP_SHELL_ASSETS = [
   '/css/player.css',
   '/css/watch.css',
   '/css/theme.css',
+  '/css/browse-live.css',
+  '/css/profile-schemes.css',
   '/js/config.js',
   '/js/proxy-auth.js',
   '/js/source-speed.js',
@@ -27,6 +29,9 @@ const APP_SHELL_ASSETS = [
   '/js/episode-context.js',
   '/js/modal-accessibility.js',
   '/js/customer_site.js',
+  '/js/profile-manager.js',
+  '/js/catalog-adapter.js',
+  '/js/browse-live.js',
   '/js/ui.js',
   '/js/api.js',
   '/js/douban.js',

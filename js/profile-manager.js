@@ -86,7 +86,10 @@
        :'正在加载订阅源…';
   }
   async function refresh(force=false){
-    if(!force&&lastSync&&Date.now()-lastSync<refreshEvery){dispatch();return;}
+    if(!force&&lastSync&&Date.now()-lastSync<refreshEvery){
+      updateSelection(remote);
+      dispatch();return;
+    }
     try{
       const response=await fetch('/managed-sources',{cache:'no-store'});
       if(!response.ok)throw Error('HTTP '+response.status);
@@ -110,19 +113,28 @@
     const target=document.getElementById('searchArea');
     if(!target)return;
     const bar=document.createElement('section');bar.className='lt-preset-bar';
-    const heading=document.createElement('strong');heading.textContent='网站配置方案';
+    const header=document.createElement('div');header.className='lt-preset-header';
+    const heading=document.createElement('strong');heading.className='lt-preset-heading';heading.textContent='网站配置方案';
+    const hint=document.createElement('span');hint.className='lt-preset-hint';hint.textContent='点击切换';
+    header.append(heading,hint);
     const tabs=document.createElement('div');tabs.className='lt-preset-tabs';
+    tabs.setAttribute('role','group');tabs.setAttribute('aria-label','切换网站配置方案');
     for(const item of presets){
+      const selected=item.id===active;
       const b=document.createElement('button');b.type='button';
-      b.textContent=item.title;b.className=item.id===active?'active':'';
-      b.title=item.description;
+      b.className=selected?'active':'';
+      b.setAttribute('aria-pressed',String(selected));
+      const name=document.createElement('span');name.className='lt-preset-button-title';name.textContent=(item.id==='local'?'📺 ':'🔄 ')+item.title;
+      const desc=document.createElement('span');desc.className='lt-preset-button-desc';desc.textContent=item.description;
+      const mark=document.createElement('span');mark.className='lt-preset-button-state';mark.textContent=selected?'✓ 当前使用':'点击启用';
+      b.append(name,desc,mark);
       b.addEventListener('click',()=>switchTo(item.id));
       tabs.appendChild(b);
     }
-    const future=document.createElement('span');future.className='lt-preset-future';future.textContent='方案三 / 四：可继续添加';
+    const future=document.createElement('span');future.className='lt-preset-future';future.textContent='方案三、四可以继续添加其他作者的配置';
     const note=document.createElement('p');note.id='ltPresetStatus';
     note.textContent=active==='local'?'原有默认配置，未接入远程更新。':'正在读取维护者的健康源…';
-    bar.append(heading,tabs,future,note);
+    bar.append(header,tabs,future,note);
     target.insertAdjacentElement('beforebegin',bar);
     document.body.classList.toggle('lt-preset-managed',active==='managed');
     dispatch();

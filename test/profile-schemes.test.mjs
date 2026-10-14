@@ -79,3 +79,26 @@ test('both home and video page import profile manager before app/player code',()
   assert.ok(player.indexOf('profile-manager.js')<player.indexOf('js/player.js'));
   assert.ok(home.includes('browse-live.css'));
 });
+test('cached remote subscription initializes first-time selection without network call',async()=>{
+  const rows=[{id:'managed_abc',name:'360资源',api:'https://360.example.org/api.php/provide/vod',searchable:true},
+    {id:'managed_def',name:'大众',api:'https://dz.example.org/api.php/provide/vod',searchable:true}];
+  const store=new Map([
+    ['libretv:active-preset','managed'],
+    ['selectedAPIs','[]'],
+    ['libretv:managed-cache:v1',JSON.stringify({sources:rows,syncedAt:Date.now()})]
+  ]);
+  const {window}=setup(store);
+  await window.LibreProfiles.refresh();
+  assert.deepEqual(JSON.parse(store.get('selectedAPIs')),['managed_abc','managed_def']);
+  assert.equal(store.get('libretv:preset-managed-initialized'),'yes');
+});
+test('mobile preset has its own versioned stylesheet and distinct accessible buttons',()=>{
+  const html=fs.readFileSync(root+'index.html','utf8');
+  const css=fs.readFileSync(root+'css/profile-schemes.css','utf8');
+  const worker=fs.readFileSync(root+'service-worker.js','utf8');
+  assert.match(html,/profile-schemes\.css\?v=20261014b/);
+  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(code,/aria-pressed/);
+  assert.match(code,/lt-preset-button-title/);
+  assert.match(worker,/20261014-profile-v2/);
+});

@@ -1,0 +1,40 @@
+/* Profile switcher: independently versioned to avoid stale mobile/PWA CSS. */
+.lt-preset-bar {
+  box-sizing:border-box; max-width:1280px; width:calc(100% - 32px);
+  margin:20px auto 18px; padding:16px;
+  display:flex; flex-direction:column; align-items:stretch; gap:12px;
+  background:linear-gradient(125deg,#18243a,#0f192b);
+  border:1px solid #526382; border-radius:18px; color:#f1f5f9;
+  box-shadow:0 12px 30px rgba(0,0,0,.19)
+}
+.lt-preset-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lt-preset-heading{font-size:16px;font-weight:750;line-height:1.4}
+.lt-preset-hint{font-size:11px;color:#94a3b8;white-space:nowrap}
+.lt-preset-tabs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:10px}
+.lt-preset-tabs button{
+  box-sizing:border-box;appearance:none;display:flex!important;flex-direction:column;
+  gap:6px;align-items:flex-start;min-width:0;min-height:91px;padding:13px 14px;
+  border-radius:12px;border:1px solid #465670;background:#1f2b40;
+  color:#dbe5f4;cursor:pointer;text-align:left;box-shadow:none;
+  transition:border-color .12s,background .12s
+}
+.lt-preset-tabs button:focus-visible{outline:3px solid #7dd3fc;outline-offset:2px}
+.lt-preset-tabs button.active{border:2px solid #34d399;background:#064e3b;color:#f0fdf4;padding:12px 13px}
+.lt-preset-tabs button .lt-preset-button-title{font-size:14px;font-weight:750;line-height:1.3}
+.lt-preset-tabs button .lt-preset-button-desc{font-size:11px;line-height:1.45;color:#9fb0c8;overflow-wrap:anywhere}
+.lt-preset-tabs button.active .lt-preset-button-desc{color:#a7f3d0}
+.lt-preset-tabs button .lt-preset-button-state{font-size:10px;color:#cbd5e1}
+.lt-preset-tabs button.active .lt-preset-button-state{color:#6ee7b7;font-weight:700}
+.lt-preset-future,.lt-preset-bar #ltPresetStatus{margin:0!important;font-size:12px;line-height:1.5;color:#94a3b8}
+.lt-preset-future{display:block}
+body.lt-preset-managed .lt-preset-bar{border-color:#0d9488;background:linear-gradient(130deg,#0a3330,#122337)}
+body.lt-preset-managed .lt-preset-tabs button.active{border-color:#2dd4bf;background:#115e59}
+body.lt-preset-managed .lt-preset-tabs button.active .lt-preset-button-desc{color:#99f6e4}
+@media(max-width:640px){
+  .lt-preset-bar{margin:14px auto 18px;width:calc(100% - 26px);padding:12px;gap:10px;border-radius:15px}
+  .lt-preset-tabs{gap:8px}
+  .lt-preset-tabs button{min-height:102px;padding:11px 10px;border-radius:10px}
+  .lt-preset-tabs button.active{padding:10px 9px}
+  .lt-preset-tabs button .lt-preset-button-title{font-size:13px}
+  .lt-preset-tabs button .lt-preset-button-desc{font-size:10px}
+}
