@@ -59,5 +59,5 @@ test('UI copies a title on direct user click and remains an optional third tab',
   assert.doesNotMatch(ui,/new Hls\(|new Artplayer\(|QuickPlay\.open/);
   const index=fs.readFileSync(root+'index.html','utf8');
   assert.ok(index.indexOf('curated-lists.js')<index.indexOf('hot-list.js'));
-  assert.match(index,/curated-lists\.css\?v=20261014seed1/);
+  assert.match(index,/curated-lists\.css\?v=20261014seed2/);
 });
