@@ -41,3 +41,16 @@
 .lt-live-channel strong{font-size:13px}
 .lt-live-channels{max-height:60vh;overflow-y:auto}
 @media(max-width:640px){.lt-live-sourcebar label{width:100%}.lt-live-sourcebar select,.lt-live-sourcebar input{max-width:none;width:100%}.lt-live-channels{max-height:34vh}}
+
+/* Reusable site-level profile skin. */
+.lt-preset-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 13px;margin:8px auto 16px;max-width:1280px;padding:13px 16px;background:#152035;border:1px solid #31415a;border-radius:15px;color:#e2e8f0}
+.lt-preset-bar>strong{font-size:15px;white-space:nowrap}
+.lt-preset-tabs{display:flex;gap:7px;flex-wrap:wrap}
+.lt-preset-tabs button{cursor:pointer;padding:8px 12px;border:1px solid #43546c;background:#1e293b;border-radius:9px;color:#cbd5e1;font-size:13px}
+.lt-preset-tabs button.active{border-color:#22c55e;background:#064e3b;color:#f0fdf4;font-weight:700}
+.lt-preset-future{font-size:12px;color:#64748b}
+.lt-preset-bar>p{font-size:12px;color:#94a3b8;margin:0;flex-basis:100%}
+body.lt-preset-managed .lt-preset-bar{border-color:#0d9488;background:linear-gradient(110deg,#042f2e,#102338)}
+body.lt-preset-managed .lt-preset-tabs button.active{border-color:#2dd4bf;background:#115e59;color:#f0fdfa}
+body.lt-preset-managed .lt-explore{border-color:#0f766e;background:linear-gradient(165deg,#102d2b,#111c2c)}
+@media(max-width:640px){.lt-preset-bar{padding:10px 12px;margin-bottom:12px}.lt-preset-tabs{width:100%}.lt-preset-tabs button{flex:1;min-width:125px}}

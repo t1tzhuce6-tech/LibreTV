@@ -144,6 +144,7 @@ function getAvailableDefaultApiIds() {
 }
 
 function initializeDefaultSettings() {
+    if (window.LibreProfiles?.active === 'managed') return; // 远程方案独立保存，不强制塞入旧的七个源
     const defaultApiIds = getAvailableDefaultApiIds();
     // Personal deployment: keep only the marked default VOD sources active.
     const visibleIds = selectedAPIs.filter(apiId => defaultApiIds.includes(apiId));
@@ -236,7 +237,8 @@ function initAPICheckboxes() {
     // 创建普通API源的复选框
     Object.keys(API_SITES).forEach(apiKey => {
         const api = API_SITES[apiKey];
-        if (api.adult || !DEFAULT_SELECTED_APIS.includes(apiKey)) return; // 暂只展示默认源
+        if (api.adult && window.LibreProfiles?.active !== 'managed') return;
+        if (!(window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS).includes(apiKey)) return;
 
         const checked = selectedAPIs.includes(apiKey);
 
@@ -247,7 +249,7 @@ function initAPICheckboxes() {
                    class="form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333]" 
                    ${checked ? 'checked' : ''} 
                    data-api="${apiKey}">
-            <label for="api_${apiKey}" class="ml-1 text-xs text-emerald-400 truncate">✅ 默认 · ${api.name}</label>
+            <label for="api_${apiKey}" class="ml-1 text-xs text-emerald-400 truncate">${api.managed ? '🔄 订阅 · ' : '✅ 默认 · '}${api.name}</label>
         `;
         normaldiv.appendChild(checkbox);
 
