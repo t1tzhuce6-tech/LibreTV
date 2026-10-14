@@ -69,7 +69,8 @@
       const data=await fetchVodApiJson(context.apiBaseUrl+'?ac=list');
       if(req!==state.sequence)return;
       if(!data||!Array.isArray(data.class))throw new Error('分类接口未返回有效数据');
-      state.classes=window.LibreCatalog.normalClasses(data.class);
+      state.classes=window.LibreCatalog.normalClasses(data.class)
+        .filter(c=>!window.LibreContentPolicy?.isAdultCategory(c.type_name));
     }catch(error){
       if(req!==state.sequence)return;
       showMsg('分类读取失败。可尝试切换源，或确认已输入网站密码。');
@@ -78,7 +79,9 @@
   }
   function renderCards(items){
     const box=$('ltBrowseCards');box.replaceChildren();
-    for(const item of items){
+    const safe=window.LibreContentPolicy?.filterVideos(items)||items;
+    const visible=typeof filterYellowContentResults==='function'?filterYellowContentResults(safe):safe;
+    for(const item of visible){
       const id=String(item.vod_id||'');if(!id)continue;
       const sourceId=state.source;
       const card=node('button','lt-explore-card');card.type='button';
@@ -264,15 +267,12 @@
   }
   function start(){
     const root=node('section','lt-explore');root.id='ltExplore';
-    root.innerHTML='<div class="lt-explore-top"><div><h2>发现影片与高清电视</h2><p>切换资源浏览分类片单；直播直接连接频道源，视频不经 CF 中转。</p></div><div class="lt-explore-modes"><button id="ltModeBrowse" class="is-active" type="button">分类逛片</button><button id="ltModeLive" type="button">高清电视直播</button></div></div>'
+    root.innerHTML='<div class="lt-explore-top"><div><h2>按片源分类浏览</h2><p>各影视源独立分类与片单。已过滤成人内容。</p></div></div>'
       +'<div id="ltBrowseBody"><div class="lt-explore-controls"><label>影视源 <select id="ltBrowseSource"></select></label><label>细分类 <select id="ltBrowseCategory"></select></label></div><div id="ltBrowseCats" class="lt-explore-cats"></div><p id="ltBrowseStatus" class="lt-explore-status"></p><div id="ltBrowseCards" class="lt-explore-grid"></div><div class="lt-explore-paging"><button id="ltPrevPage" type="button">上一页</button><button id="ltNextPage" type="button">下一页</button></div></div>'
-      +'<div id="ltLiveBody" hidden><div class="lt-live-sourcebar"><label>直播订阅 <select id="ltLiveProvider"></select></label><label>频道分组 <select id="ltLiveGroup"></select></label><label>搜索 <input id="ltLiveQuery" placeholder="例如 CCTV、卫视、电影" type="search"></label><input id="ltLiveCustomUrl" hidden placeholder="填写 HTTPS M3U 订阅链接" type="url"><button id="ltLiveReload" hidden type="button">读取订阅</button><span id="ltLiveCount"></span></div><div class="lt-live-layout"><div id="ltLiveChannels" class="lt-live-channels"></div><div class="lt-live-player"><h3 id="ltLiveName">选择频道开始直播</h3><video id="ltLiveVideo" controls playsinline preload="none"></video><p id="ltLiveStatus">已检验所选频道的 HLS 主清单包含 1920×1080 选项；实际播放受网络和地区限制。</p><p class="lt-explore-note">直播媒体在你的设备上直接播放，不通过 Cloudflare 视频代理。</p></div></div></div>';
+;
     const after=$('searchArea');if(!after)return;
     after.insertAdjacentElement('afterend',root);
-    $('ltModeBrowse').addEventListener('click',()=>chooseMode('browse'));
-    $('ltModeLive').addEventListener('click',()=>chooseMode('live'));
-    initSources();initLive();syncSearchState();loadCategories();
-    window.addEventListener('pagehide',resetPlayer);
+    initSources();syncSearchState();loadCategories();
   }
   document.addEventListener('DOMContentLoaded',start);
 })();

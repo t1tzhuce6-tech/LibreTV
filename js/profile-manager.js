@@ -21,10 +21,13 @@
         &&/\/(?:api\.php\/)?provide\/vod\/?$/i.test(url.pathname)&&url.hostname.length>3;
     }catch{return false;}
   }
+  function rootIsAdultSource(entry){return !!window.LibreContentPolicy?.isAdultSource(entry);}
   function install(rows){
     for(const entry of remote)delete API_SITES[entry.id];
     const unique=new Set();
-    remote=(Array.isArray(rows)?rows:[]).filter(valid).filter(e=>{if(unique.has(e.id))return false;unique.add(e.id);return true;}).slice(0,75);
+    remote=(Array.isArray(rows)?rows:[]).filter(valid)
+      .filter(e=>!rootIsAdultSource(e))
+      .filter(e=>{if(unique.has(e.id))return false;unique.add(e.id);return true;}).slice(0,75);
     for(const entry of remote)API_SITES[entry.id]={name:entry.name.slice(0,65),api:entry.api,managed:true};
   }
   function loadCache(){

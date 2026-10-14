@@ -44,7 +44,7 @@ function isAdultSourceId(apiId) {
         const customApi = getCustomApiInfo(apiId.replace('custom_', ''));
         return Boolean(customApi?.isAdult);
     }
-    return Boolean(API_SITES[apiId]?.adult);
+    return Boolean(API_SITES[apiId]?.adult || window.LibreContentPolicy?.isAdultSource(API_SITES[apiId]));
 }
 
 function getSearchableApiIds(apiIds = selectedAPIs) {
@@ -118,7 +118,8 @@ function matchesYellowContent(item) {
         item?.source_name
     ].map(normalizeFilterText).join(' ');
 
-    return YELLOW_CONTENT_KEYWORDS.some(keyword => haystack.includes(keyword.toLowerCase()));
+    return Boolean(window.LibreContentPolicy?.isAdultVideo(item))
+        || YELLOW_CONTENT_KEYWORDS.some(keyword => haystack.includes(keyword.toLowerCase()));
 }
 
 function filterYellowContentResults(results) {
@@ -204,7 +205,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // 设置黄色内容过滤器开关初始状态
     const yellowFilterToggle = document.getElementById('yellowFilterToggle');
     if (yellowFilterToggle) {
-        yellowFilterToggle.checked = localStorage.getItem('yellowFilterEnabled') === 'true';
+        localStorage.setItem('yellowFilterEnabled', 'true');
+        yellowFilterToggle.checked = true;
+        yellowFilterToggle.disabled = true;
+        yellowFilterToggle.title = '成人内容过滤已固定开启';
     }
 
     // 设置广告过滤开关初始状态
@@ -237,7 +241,7 @@ function initAPICheckboxes() {
     // 创建普通API源的复选框
     Object.keys(API_SITES).forEach(apiKey => {
         const api = API_SITES[apiKey];
-        if (api.adult && window.LibreProfiles?.active !== 'managed') return;
+        if (isAdultSourceId(apiKey)) return;
         if (!(window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS).includes(apiKey)) return;
 
         const checked = selectedAPIs.includes(apiKey);
