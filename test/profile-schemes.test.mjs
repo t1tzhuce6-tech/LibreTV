@@ -100,5 +100,5 @@ test('mobile preset has its own versioned stylesheet and distinct accessible but
   assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(code,/aria-pressed/);
   assert.match(code,/lt-preset-button-title/);
-  assert.match(worker,/20261014-curated-v2/);
+  assert.match(worker,/20261014-poster-v1/);
 });
