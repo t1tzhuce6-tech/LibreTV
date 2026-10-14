@@ -12,10 +12,16 @@
     {id:'douban_show_global',name:'海外综艺',type:'tv'},
     {id:'baidu_teleplay',name:'百度热播剧',type:'tv'}
   ];
+  const longBoards=[
+    {id:'browse_movie',name:'热门电影 · 往下翻',type:'movie'},
+    {id:'browse_tv',name:'热门电视剧 · 往下翻',type:'tv'}
+  ];
+  const isLongBoard=id=>longBoards.some(x=>x.id===id);
   const storeKey='libretv:home-recommendation-mode';
   const boardKey='libretv:hot-list-board';
   const ttl=45*60*1000;
-  let mode='hotlist', current='douban_movie_weekly',seq=0;
+  let mode='hotlist', current='browse_movie',seq=0;
+  let discovery={offset:0,items:[],seen:new Set(),loading:false,more:true};
   const el=(name,cls,text)=>{
     const n=document.createElement(name);
     if(cls)n.className=cls;
@@ -48,8 +54,8 @@
     }catch{}
     return normalized;
   }
-  function render(items){
-    const area=document.getElementById('ltHotListCards');area.replaceChildren();
+  function render(items,append=false){
+    const area=document.getElementById('ltHotListCards');if(!append)area.replaceChildren();
     const frag=document.createDocumentFragment();
     items.forEach(item=>{
       const card=el('button','lt-rank-card');
@@ -63,8 +69,8 @@
         if(typeof createImagePlaceholder==='function')image.src=createImagePlaceholder('暂无封面');
         else image.style.opacity='.2';
       };
-      const badge=el('span','lt-rank-number','#'+(Number(item.rank)||'?'));
-      art.append(image,badge);
+      art.append(image);
+      if(item.rank)art.appendChild(el('span','lt-rank-number','#'+item.rank));
       if(item.rating){art.appendChild(el('span','lt-rank-rating','★ '+Number(item.rating).toFixed(1)));}
       card.appendChild(art);
       card.appendChild(el('span','lt-rank-name',item.title));
@@ -76,16 +82,67 @@
       frag.appendChild(card);
     });
     area.appendChild(frag);
-    if(!items.length)area.appendChild(el('p','lt-rank-empty','没有可展示的榜单内容。'));
+    if(!items.length&&!append)area.appendChild(el('p','lt-rank-empty','没有可展示的榜单内容。'));
+  }
+  async function loadBrowseMore(){
+    if(!isLongBoard(current)||discovery.loading||!discovery.more||mode!=='hotlist')return;
+    const mySeq=seq,button=document.getElementById('ltHotListMore');
+    discovery.loading=true;
+    if(button){button.disabled=true;button.textContent='正在加载下一批…';}
+    try{
+      if(typeof fetchDoubanData!=='function')throw new Error('豆瓣推荐模块尚未准备好');
+      const kind=current==='browse_movie'?'movie':'tv';
+      const url='https://movie.douban.com/j/search_subjects?type='+kind+'&tag='+encodeURIComponent('热门')
+        +'&sort=recommend&page_limit=20&page_start='+discovery.offset;
+      const response=await fetchDoubanData(url);
+      if(mySeq!==seq||mode!=='hotlist'||!isLongBoard(current))return;
+      if(!Array.isArray(response.subjects))throw new Error('返回格式不正确');
+      const page=response.subjects,additions=[];
+      for(const row of page){
+        const title=String(row?.title||'').trim();
+        const id=String(row?.id||title);
+        if(!title||discovery.seen.has(id))continue;
+        discovery.seen.add(id);
+        const item={id,title,cover:String(row.cover||''),rating:Number(row.rate)||null,
+          kind,rank:null,year:String(row.year||''),subtitle:String(row.subtitle||'')};
+        if(!adult(item))additions.push(item);
+      }
+      discovery.offset+=20;discovery.items.push(...additions);
+      render(additions,true);
+      discovery.more=page.length===20&&discovery.offset<400;
+      if(button)button.hidden=!discovery.more;
+      setStatus('豆瓣热门推荐 · 已显示 '+discovery.items.length+' 部 · 点击海报自动找片'
+        +(discovery.more?' · 可向下继续浏览':' · 已到当前可用列表末尾'));
+    }catch(error){
+      if(mySeq!==seq)return;
+      setStatus('下一批加载失败：'+error.message+'。可以点击下方按钮重试，已显示的影片不会丢失。');
+    }finally{
+      if(mySeq===seq){discovery.loading=false;if(button){button.disabled=false;button.textContent='继续加载 20 部 ↓';}}
+    }
+  }
+  function showBrowse(id){
+    discovery={offset:0,items:[],seen:new Set(),loading:false,more:true};
+    document.getElementById('ltHotListCards').replaceChildren();
+    setStatus('正在获取豆瓣热门影片（每次 20 部）…');
+    const button=document.getElementById('ltHotListMore');
+    if(button){button.hidden=false;button.disabled=false;}
+    loadBrowseMore();
   }
   async function loadChart(id,force=false){
     current=id;save(boardKey,id);
     const seqNow=++seq;
+    const isBrowse=isLongBoard(id);
+    const shortLists=document.getElementById('ltHotListShortBoards');
+    if(shortLists)shortLists.open=!isBrowse;
+    const more=document.getElementById('ltHotListMore');
+    if(more)more.hidden=!isBrowse;
     document.querySelectorAll('[data-lt-hot-chart]').forEach(button=>{
       const selected=button.dataset.ltHotChart===id;
       button.classList.toggle('active',selected);
       button.setAttribute('aria-pressed',String(selected));
     });
+    if(isBrowse){showBrowse(id);return;}
+    discovery.more=false;
     const key='libretv:chart-cache:'+id;
     if(!force){
       try{
@@ -144,22 +201,40 @@
     head.append(title,modes);
     const body=el('div','lt-hotlist-content');body.id='ltHotListContent';
     const bar=el('div','lt-hotlist-boardbar');
+    const featured=el('div','lt-hotlist-featured');
+    for(const entry of longBoards){
+      const button=el('button','lt-hotlist-feature-button',entry.name);
+      button.type='button';button.dataset.ltHotChart=entry.id;
+      button.addEventListener('click',()=>loadChart(entry.id));featured.appendChild(button);
+    }
+    const shortLists=el('details','lt-hotlist-short-boards');shortLists.id='ltHotListShortBoards';
+    shortLists.append(el('summary','','其他六个每周精选小榜'));
     const choices=el('div','lt-hotlist-choices');
     charts.forEach(chart=>{
       const b=el('button','',chart.name);b.type='button';b.dataset.ltHotChart=chart.id;
       b.addEventListener('click',()=>loadChart(chart.id));choices.appendChild(b);
     });
-    const refresh=el('button','lt-hotlist-refresh','↻ 刷新榜单');
-    refresh.type='button';refresh.addEventListener('click',()=>{const grid=document.getElementById('ltHotListCards');grid.replaceChildren();loadChart(current,true);});
-    bar.append(choices,refresh);
+    shortLists.append(choices);
+    const refresh=el('button','lt-hotlist-refresh','↻ 刷新当前列表');
+    refresh.type='button';refresh.addEventListener('click',()=>{loadChart(current,true);});
+    bar.append(featured,shortLists,refresh);
     const status=el('p','lt-hotlist-status','来自豆瓣周榜与百度热播榜');status.id='ltHotListStatus';
     const cards=el('div','lt-hotlist-grid');cards.id='ltHotListCards';
+    const more=el('button','lt-hotlist-more','继续加载 20 部 ↓');
+    more.id='ltHotListMore';more.type='button';more.hidden=true;
+    more.addEventListener('click',loadBrowseMore);
     const credits=el('p','lt-hotlist-credits');
-    const source=el('a','', '数据：LibreTV 官方榜单流程 / 60s API');
+    const source=el('a','', '数据：豆瓣热门推荐 / LibreTV 官方周榜');
     source.href='https://github.com/LibreSpark/LibreTV/wiki/Recommendations';
     source.target='_blank';source.rel='noopener noreferrer';
     credits.append(source,' · 播放使用当前方案中已选的片源');
-    body.append(bar,status,cards,credits);
+    body.append(bar,status,cards,more,credits);
+    if('IntersectionObserver' in window){
+      const observer=new IntersectionObserver(entries=>{
+        if(entries.some(e=>e.isIntersecting)&&mode==='hotlist'&&isLongBoard(current))loadBrowseMore();
+      },{rootMargin:'80px'});
+      observer.observe(more);
+    }
     const curated=el('div','lt-hotlist-content');curated.id='ltCuratedContent';curated.hidden=true;
     window.LibreCurated?.init(curated);
     container.append(head,body,curated);
@@ -178,7 +253,10 @@
       observe();
     }
     const saved=read(boardKey);
-    if(charts.some(c=>c.id===saved))current=saved;
+    if([...charts,...longBoards].some(c=>c.id===saved))current=saved;
+    if(read('libretv:long-browse-introduced')!=='yes'){
+      current='browse_movie';save('libretv:long-browse-introduced','yes');
+    }
     const savedMode=read(storeKey);
     setMode(['douban','curated'].includes(savedMode)?savedMode:'hotlist');
   }
