@@ -1,4 +1,4 @@
-const APP_VERSION = '20261015-iqiyi-v1';
+const APP_VERSION = '20261015-nexus-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -21,6 +21,7 @@ const APP_SHELL_ASSETS = [
   '/css/profile-schemes.css',
   '/css/hot-list.css',
   '/css/iqiyi-ranks.css',
+  '/css/nexus-lists.css',
   '/css/curated-lists.css',
   '/js/config.js',
   '/js/proxy-auth.js',
@@ -35,6 +36,7 @@ const APP_SHELL_ASSETS = [
   '/js/content-policy.js',
   '/js/hot-list.js',
   '/js/iqiyi-ranks.js',
+  '/js/nexus-lists.js',
   '/js/curated-lists.js',
   '/js/profile-manager.js',
   '/js/catalog-adapter.js',

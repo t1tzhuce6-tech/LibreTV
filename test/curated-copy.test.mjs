@@ -53,9 +53,9 @@ test('UI copies a title on direct user click and remains an optional third tab',
   assert.match(ui,/navigator\.clipboard\.writeText\(title\)/);
   assert.match(ui,/window\.prompt\(/);
   assert.match(home,/ltCuratedContent/);
-  assert.match(home,/\{id:'curated',name:'主题片单（复制搜索）'\}/);
+  assert.match(home,/\{id:'curated',name:'中文精选片单'\}/);
   assert.match(home,/window\.LibreCurated\?\.init\(curated\)/);
-  assert.match(home,/window\.LibreCurated\?\.show\(\)/);
+  assert.match(fs.readFileSync(root+'js/nexus-lists.js','utf8'),/window\.LibreCurated\?\.show\(\)/);
   assert.doesNotMatch(ui,/new Hls\(|new Artplayer\(|QuickPlay\.open/);
   const index=fs.readFileSync(root+'index.html','utf8');
   assert.ok(index.indexOf('curated-lists.js')<index.indexOf('hot-list.js'));

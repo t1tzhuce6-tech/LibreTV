@@ -175,10 +175,13 @@
     mode=['douban','curated','iqiyi'].includes(value)?value:'hotlist';save(storeKey,mode);
     document.body.classList.toggle('lt-rank-active',mode!=='douban');
     if(mode!=='iqiyi')window.LibreIqi?.hide();
+    if(mode!=='curated')window.LibreNexus?.hide();
     const section=document.getElementById('ltHotListContent');
     if(section)section.hidden=mode!=='hotlist';
     const curated=document.getElementById('ltCuratedContent');
-    if(curated)curated.hidden=mode!=='curated';
+    if(curated)curated.hidden=true;
+    const nexus=document.getElementById('ltNexusContent');
+    if(nexus)nexus.hidden=mode!=='curated';
     const official=document.getElementById('ltIqiContent');
     if(official)official.hidden=mode!=='iqiyi';
     document.querySelectorAll('[data-lt-recommend-mode]').forEach(button=>{
@@ -187,7 +190,7 @@
       button.setAttribute('aria-pressed',String(selected));
     });
     if(mode==='hotlist')loadChart(current);
-    else if(mode==='curated')window.LibreCurated?.show();
+    else if(mode==='curated')window.LibreNexus?.show();
     else if(mode==='iqiyi')window.LibreIqi?.show();
     else if(typeof enableHomeRecommendations==='function'&&read('doubanEnabled')!=='true')enableHomeRecommendations();
   }
@@ -198,7 +201,7 @@
     const head=el('div','lt-hotlist-head');
     const title=el('div','lt-hotlist-title','发现值得看的影视');
     const modes=el('div','lt-hotlist-modes');
-    for(const item of [{id:'iqiyi',name:'爱奇艺风云榜'},{id:'hotlist',name:'豆瓣榜单'},{id:'curated',name:'主题片单（复制搜索）'},{id:'douban',name:'原豆瓣推荐'}]){
+    for(const item of [{id:'iqiyi',name:'爱奇艺风云榜'},{id:'hotlist',name:'豆瓣榜单'},{id:'curated',name:'中文精选片单'},{id:'douban',name:'原豆瓣推荐'}]){
       const button=el('button','',item.name);button.type='button';button.dataset.ltRecommendMode=item.id;
       button.addEventListener('click',()=>setMode(item.id));modes.appendChild(button);
     }
@@ -243,7 +246,10 @@
     window.LibreCurated?.init(curated);
     const iqiyi=el('div','lt-hotlist-content');iqiyi.id='ltIqiContent';iqiyi.hidden=true;
     window.LibreIqi?.init(iqiyi);
-    container.append(head,body,curated,iqiyi);
+    curated.hidden=true;
+    const nexus=el('div','lt-hotlist-content');nexus.id='ltNexusContent';nexus.hidden=true;
+    window.LibreNexus?.init(nexus,curated);
+    container.append(head,body,curated,iqiyi,nexus);
     // Rankings must precede the long source-browse card grid, or they are buried below it.
     const search=document.getElementById('searchArea');
     if(search){
