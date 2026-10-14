@@ -37,6 +37,17 @@
     const target=document.getElementById('ltHotListStatus');
     if(target)target.textContent=msg;
   }
+  // Douban poster CDN requires a Douban Referer; the browser cannot set that header.
+  // The restricted same-origin image function supplies it while leaving other cover hosts untouched.
+  function posterUrl(raw){
+    const normalized=typeof normalizeImageUrl==='function'?normalizeImageUrl(raw):String(raw||'');
+    try{
+      const parsed=new URL(normalized);
+      if(/^img\d+\.doubanio\.com$/i.test(parsed.hostname)&&parsed.protocol==='https:')
+        return '/poster-image?url='+encodeURIComponent(normalized);
+    }catch{}
+    return normalized;
+  }
   function render(items){
     const area=document.getElementById('ltHotListCards');area.replaceChildren();
     const frag=document.createDocumentFragment();
@@ -46,7 +57,7 @@
       const art=el('div','lt-rank-poster');
       const image=el('img','lt-rank-cover');
       image.loading='lazy';image.alt=item.title;image.referrerPolicy='no-referrer';
-      image.src=typeof normalizeImageUrl==='function'?normalizeImageUrl(item.cover):item.cover;
+      image.src=posterUrl(item.cover);
       image.onerror=()=>{
         image.onerror=null;
         if(typeof createImagePlaceholder==='function')image.src=createImagePlaceholder('暂无封面');
