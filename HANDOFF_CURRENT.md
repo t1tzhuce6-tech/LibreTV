@@ -1,0 +1,87 @@
+# LibreTV / Cloudflare Pages — 当前接力入口
+最后核验：2026-10-15（北京时间）。本文件是给新 Codex / GPT 窗口的工作交接，不是产品需求替代文件。
+**不要重新建项目。** 现有项目就是 G:\CodexWorkspace\04_PROJECTS\LibreTV_CF_Deployment。
+GitHub：https://github.com/t1tzhuce6-tech/LibreTV
+线上：https://libretv-private-20261013.pages.dev/
+历史流水和证据见 docs/LIBRETV_DISCOVERY_HISTORY_20261015.md。
+
+## 0. 新接手者先做的四件事
+1. 在现有目录读取本文件和历史文件；不要凭旧会话直接改站。
+2. 检查 git status、分支、origin/main、Cloudflare 最近部署及用户最新反馈。
+3. 代码修改须从最新 origin/main 新建功能分支；先运行 npm test，再改；通过 PR 合并，验收上线。
+4. 单轮改动范围保持小，尽量每个步骤不超过约20分钟；上线前必须实测真实数据与浏览器页面。
+## 1. 已核对的磁盘/Git 事实
+- 工作目录存在，包含 index.html、js/、css/、functions/、test/、docs/、.git/。
+- 2026-10-15 07:36：本地分支 feat/nexus-chinese-lists-20261015，HEAD=ef90819。
+- 已 git fetch；远端 origin/main=a526d7e44242a507f1677236a3af3e4f440a5211。
+- 本地功能分支与 origin/main 分别有1个独有提交（GitHub squash 合并造成）；不要把 ef90819 当主线，也不要重复合并。
+- 核验前 git status 干净；随后接力文档为新建未提交的本地文件，不影响生产代码。
+- 本地 npm test：110/110 通过，0失败（2026-10-15接力前实测）。
+- GitHub 最新主线：a526d7e “Add Chinese Nexus editorial directory with full ranked lists”。
+- Cloudflare Pages 项目：libretv-private-20261013；此前验证生产构建 success、部署 SHA=a526d7e。
+- Cloudflare 实际 HTTP 200 的数据以及浏览器验收详情见历史文件；不要将它误写成永久可用保证。
+## 2. 用户的实际目标和边界
+- 做好用、中文优先、基本免维护的影视发现入口；不愿意手工维护几十个失效影视源或片单。
+- 豆瓣只是多个榜单来源之一；爱奇艺、腾讯、猫眼等需要各自真实排名和原平台分类，不能混起来假造总榜。
+- 能分页的必须能继续翻，不能只接25条首屏；无分页的不能臆造更多数据。
+- 中文主题/种草片单需要标题、说明、海报、完整作品列表；原来 My Lists 全英文且恐怖/成人内容较多，已降为备用。
+- 成年内容应在片单目录、分类、影片三级过滤；恐怖题材不要默认大量推荐，可独立隐藏/另设选项。
+- 用户点影片可走网站原有 QuickPlay 自动找片；找不到时可复制中文片名回站搜索。不得承诺所有影片一定能播放。
+- 网站原有两个配置方案必须保留独立设置；旧 IPTV 前端已按要求移除，未经明确批准不得重新加入。
+- 未批准的第3阶段：选某个具体片源之后，该片源横向分类、细分类下拉、影片查询都只用这个片源真实 type_id。
+## 3. 已实现、已合并进 main 的部分
+- 方案1：原始 LibreTV VOD；方案2：由 hebijunge/tvbox-config 的 healthy.json 导入兼容 MacCMS 源，配置互相独立。
+- 内容策略：隐藏成人源/目录/片名；旧的电视直播 UI 移除，内部旧 IPTV 文件尚在，勿误删或重启用。
+- 六个短榜：豆瓣电影、国产剧、海外剧、两类综艺、百度热播剧；上游多为6～10部，只能当短榜。
+- 豆瓣热门电影/电视剧：复用原豆瓣分页接口，每批20，向下追加；现在仍是两个粗分类，不是完整豆瓣分类。
+- 豆瓣海报：functions/poster-image.js 通过受限图片代理解决 Douban CDN HTTP 418 防盗链。
+- 爱奇艺风云榜：独立模式；12个频道、榜单原始顺序和热度、每次25部、追加至第50名已浏览器验收。
+- Nexus 中文片单：共43个原专题，默认屏蔽3个明确成人/恐怖/惊悚专题，实际页面40个；中文名称、海报、原名次。
+- My Lists 英文社区：原541份公开目录，非空过滤后约140份；只放在中文专题页面的手动备用入口。
+- 所有新影视入口点击影片仍使用已有 QuickPlay；Nexus 另有单独复制片名按钮。
+## 4. 真实验收证据：区分程序实现和实测
+- 爱奇艺真实 JSON：mesh.if.iqiyi.com/portal/pcw/rankList/comSecRankList，category_id=-1、tag=0、pg_num=1/2。
+- 线上 functions/iqiyi-rank 接口：总榜第1批25部，第2批25部；电影/电视剧频道各25部，含海报和热度字段。
+- 真 Chrome 对生产页：选择爱奇艺总榜 25部→点击追加50部（末张#50）→切到电影变25部（首张#1），抽查前5张海报成功，无JS异常。
+- Nexus 元数据来自原站页面 Schema.org CollectionPage / ItemList，不是我们自动编榜；线上目录40专题。
+- Nexus 线上：高分悬疑电影完整100部，热门欧美剧作者50部、过滤后48部；浏览器展示100部，抽查前8张海报全部成功。
+- Chrome 曾与第三方浏览器验收得到相互矛盾的爱奇艺切换报告；之后独立 Chrome DOM 验证25→50与换频道成功。
+- 上述证明接口与主要UI实际可用，不等于所有100部都可在所选片源播放；也不等于 iPhone 所有缓存版本均无问题。
+- 正式承诺必须依据当前代码及当次重新测试，不得把本文件里的历史观察当最新健康检测。
+## 5. 核心文件速查
+- index.html：首页入口加载顺序/静态版本参数；css/iqiyi-ranks.css、css/nexus-lists.css：新模块样式。
+- js/hot-list.js：首页模式切换与豆瓣分页、每周六小榜。
+- functions/hot-list.js：6个短榜60s API数据；js/iqiyi-ranks.js：爱奇艺UI；functions/iqiyi-rank.js：爱奇艺固定上游读取。
+- js/nexus-lists.js：中文专题目录、详情、QuickPlay和复制；functions/nexus-directory.js：目录的Schema.org解析。
+- functions/nexus-list.js：单份片单ItemList解析；js/curated-lists.js、functions/curated-*.js：原英文备用源。
+- js/douban.js：旧豆瓣推荐和既有分页读取；js/browse-live.js：片源选择及目前分类逻辑。
+- js/catalog-adapter.js：MacCMS类目 normalClasses/categoryIds；js/profile-manager.js：两套方案状态。
+- js/quick-play.js：真实搜索/播放协调；js/content-policy.js：成人内容策略。
+- service-worker.js：PWA缓存版本，现主线 APP_VERSION=20261015-nexus-v1。
+- test/：node --test（npm test）；尤其 iqiyi-ranking.test.mjs、nexus-chinese.test.mjs。
+## 6. 尚未实现或尚未充分验证：不可表述为完成
+- 爱奇艺目前只验收 tag=0 的热播类；飙升、免费、必看、期待、N刷、热搜等榜型尚未确认真实独立请求，不能直接用网页路径的数字冒充接口参数。
+- 爱奇艺源代码设 page<=40 安全上限（不是官方宣称最大页数）。用户希望尽可能完整翻阅，须验证上限后再调整。
+- 豆瓣电影/电视剧热门当前人为设约400候选上限，也不是完整的电影17类、电视10类体验。
+- Nexus 当前目录依赖固定链接顺序与结构化项目顺序对应；上游变化会造成错位，需补强解析校验。
+- Nexus 完整内容未显示评分、年份、精确类型等丰富元数据，只有片名、排名、封面和标题简介。
+- 成人筛选为规则组合，不是100%安全；用户曾报告英文片单出现色情和恐怖内容。
+- 猫眼网页目前公开榜单约30名；腾讯9个频道短榜约10名。尚未接进网站；网页能看不等于有稳定官方API。
+- 第3阶段片源→横向分类→细类→列表的严格联动，用户已认可思路但尚未实施。
+- 仅测试自动找片入口存在，尚未全面验收某个爱奇艺/Nexus作品最终播放成功率。
+## 7. 建议的下一轮顺序（先诊断/评审，再经用户确认实施）
+1. 核对生产现场与用户最近截图/反馈；跑 npm test 和真实浏览器，先处理当前可用性问题。
+2. 方案设计：完整豆瓣分类、多平台独立榜型、中文专题质量/说明/过滤、手机可读性和稳定缓存。
+3. 对爱奇艺不同榜型逐一抓取浏览器真实网络请求，仅接入已验证完全不同的真实数据。
+4. 补完豆瓣分类，避免新旧两个豆瓣入口重复；检验各标签翻页和图片来源。
+5. 评估猫眼/Tencent等独立数据的合法、稳定读取与退路；不强行绕过登录或反爬机制。
+6. 按已讨论的第3阶段做片源/分类严格联动（状态失效、旧请求污染、无类目不可静默回全部）。
+7. 每个小变更：单独分支、测试、PR、Cloudflare、手机与Chrome真实验收；失败可回退。
+**不要一次性执行全套，也不要创建另一个LibreTV项目；未经用户确认不要自行大改导航或重加直播。**
+
+## 8. 新窗口 / Codex 接力口令
+请接手现有项目 G:\CodexWorkspace\04_PROJECTS\LibreTV_CF_Deployment。
+先完整阅读 HANDOFF_CURRENT.md 和 docs/LIBRETV_DISCOVERY_HISTORY_20261015.md。
+从磁盘/Git/线上现场核对已验证事实与未完成问题，特别注意当前本地功能分支不是GitHub已squash合并的main。
+不要新建项目、不要复做已完成爱奇艺/中文专题、不要重新添加旧直播UI。
+先给我现状差异、最重要的下一项工作和风险；等我确认再修改。若获准修改，用origin/main创建新分支、运行测试、PR合并并验收生产。
