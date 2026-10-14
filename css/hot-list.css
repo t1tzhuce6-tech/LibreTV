@@ -26,3 +26,16 @@
 body.lt-rank-active #doubanArea{display:none!important}
 @media(max-width:1024px){.lt-hotlist-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:640px){.lt-hotlist{width:calc(100% - 26px);padding:12px;margin:16px auto 20px}.lt-hotlist-head{display:block}.lt-hotlist-title{font-size:19px;margin-bottom:12px}.lt-hotlist-modes{display:grid;grid-template-columns:1fr 1fr}.lt-hotlist-modes button{font-size:12px;padding:9px 6px}.lt-hotlist-boardbar{display:block}.lt-hotlist-choices{gap:6px}.lt-hotlist-choices button{font-size:12px;padding:8px 9px}.lt-hotlist-refresh{margin-top:10px}.lt-hotlist-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.lt-rank-name{font-size:12px}.lt-rank-subtitle{font-size:10px}}
+
+/* Long-form film discovery: page-based Douban popular recommendation, not top-10 chart. */
+.lt-hotlist-boardbar{display:block}
+.lt-hotlist-featured{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.lt-hotlist-feature-button{border:1px solid #475569;border-radius:12px;background:#203149;color:#f1f5f9;padding:14px 12px;font-size:15px;font-weight:700;cursor:pointer;min-height:53px}
+.lt-hotlist-feature-button.active{border:2px solid #f472b6;background:#9d174d;color:#fff;padding:13px 11px}
+.lt-hotlist-short-boards{margin:0 0 8px}
+.lt-hotlist-short-boards summary{cursor:pointer;padding:8px 0;color:#94a3b8;font-size:13px;user-select:none}
+.lt-hotlist-short-boards .lt-hotlist-choices{padding:8px 0 4px}
+.lt-hotlist-more{display:block;width:100%;border:1px solid #64748b;border-radius:12px;background:#243652;color:#e2e8f0;padding:14px 12px;font-size:15px;font-weight:650;cursor:pointer;margin:18px 0 6px}
+.lt-hotlist-more[hidden]{display:none!important}
+.lt-hotlist-more:disabled{opacity:.62;cursor:wait}
+@media(max-width:640px){.lt-hotlist-featured{gap:8px}.lt-hotlist-feature-button{font-size:13px;padding:12px 7px;line-height:1.5;min-height:62px}.lt-hotlist-feature-button.active{padding:11px 6px}.lt-hotlist-more{padding:13px 8px}}
