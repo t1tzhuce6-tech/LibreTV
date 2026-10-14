@@ -51,7 +51,7 @@ test('front end has six original chart IDs and reuses existing QuickPlay only',(
   assert.doesNotMatch(front,/new Artplayer\(|new Hls\(/);
   assert.match(front,/LibreContentPolicy\?\.isAdultVideo/);
   const page=fs.readFileSync(root+'index.html','utf8');
-  assert.match(page,/js\/hot-list\.js\?v=20261015a/);
+  assert.match(page,/js\/hot-list\.js\?v=20261015b/);
   assert.match(page,/css\/hot-list\.css\?v=20261014long1/);
   assert.ok(page.indexOf('quick-play.js')<page.indexOf('hot-list.js'));
 });
