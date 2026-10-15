@@ -3,6 +3,11 @@
  */
 (function(){
   'use strict';
+  window.LibreRankBridge?.register('iqiyi',item=>({
+    title:item?.title,
+    kind:item?.kind==='movie'?'movie':item?.kind==='tv'?'tv':'',
+    year:String(item?.details||'').match(/(?:19|20)\d{2}/)?.[0]||''
+  }));
   const channels=[
     ['-1','总榜'],['2','电视剧'],['1','电影'],['10010','中剧'],
     ['35','短剧'],['6','综艺'],['4','动漫'],['3','纪录片'],
@@ -48,9 +53,8 @@
       button.append(art,node('span','lt-rank-name',item.title));
       if(item.subtitle)button.append(node('span','lt-rank-subtitle',item.subtitle));
       button.addEventListener('click',()=>{
-        if(window.QuickPlay?.open)
-          window.QuickPlay.open({title:item.title,kind:item.kind==='movie'?'movie':'tv'});
-        else message('当前播放器尚未加载，请刷新页面。');
+        if(!window.LibreRankBridge?.open('iqiyi',item))
+          message('当前播放器尚未加载，请刷新页面。');
       });
       frag.append(button);
     }

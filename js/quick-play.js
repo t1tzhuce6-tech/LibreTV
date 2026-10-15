@@ -58,6 +58,7 @@
         const url = new URL('player.html', location.origin);
         url.searchParams.set('quick', '1');
         for (const key of ['title', 'year', 'kind', 'id', 'source']) if (request[key]) url.searchParams.set(key, request[key]);
+        url.searchParams.set('scope', request.scope || 'safe-all');
         url.searchParams.set('returnUrl', location.href);
         localStorage.setItem('lastPageUrl', location.href);
         location.assign(url);
@@ -74,28 +75,56 @@
     async function searchSource(source, request) {
         const context = getApiSearchContext(source);
         if (!context) return [];
-        const target = context.apiBaseUrl + API_CONFIG.search.path + encodeURIComponent(request.title);
-        const url = await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(target));
         const controller = new AbortController();
+        // One time budget for the source, including the two fallback pages.
         const timer = setTimeout(() => controller.abort(), 6500);
         try {
-            const response = await fetch(url, { signal: controller.signal });
-            if (!response.ok) return [];
-            const data = await response.json();
-            return (Array.isArray(data.list) ? data.list : []).filter(item => matches(item, request))
-                .map(item => ({ ...item, source_code: source }));
-        } catch { return []; } finally { clearTimeout(timer); }
+            for (let page=1;page<=3;page++) {
+                const suffix=page===1
+                    ?API_CONFIG.search.path+encodeURIComponent(request.title)
+                    :API_CONFIG.search.pagePath
+                        .replace('{query}',encodeURIComponent(request.title))
+                        .replace('{page}',String(page));
+                const url=await window.ProxyAuth.addAuthToProxyUrl(
+                    PROXY_URL+encodeURIComponent(context.apiBaseUrl+suffix));
+                const response=await fetch(url,{signal:controller.signal});
+                if(!response.ok)break;
+                const data=await response.json();
+                const found=(Array.isArray(data.list)?data.list:[])
+                    .filter(item=>matches(item,request)&&!window.LibreContentPolicy?.isAdultVideo(item))
+                    .map(item=>({...item,source_code:source}));
+                if(found.length)return found;
+                if(page>=Math.min(3,Number(data.pagecount)||1))break;
+            }
+            return [];
+        }catch{return [];}finally{clearTimeout(timer);}
     }
     async function discover(session) {
+        if(session.request.scope==='safe-all')
+            await window.LibreProfiles?.refresh?.();
         const selected = read('selectedAPIs', DEFAULT_SELECTED_APIS);
-        const protectedContent = localStorage.getItem('yellowFilterEnabled') === 'true';
-        const sources = [...new Set([session.history?.sourceName, session.request.source, ...selected].filter(Boolean))]
-            .filter(source => !protectedContent || !(API_SITES[source]?.adult || (source.startsWith('custom_') && getCustomApiInfo(source.slice(7))?.isAdult)));
+        const broaden = session.request.scope === 'safe-all';
+        const eligible = window.LibreContentPolicy?.safeSourceIds?.(broaden) || selected;
+        const sources = [...new Set(eligible)].filter(source => {
+            const info = source.startsWith('custom_')
+                ? getCustomApiInfo(source.slice(7)) : API_SITES[source];
+            return !!info && info.searchable !== false && !info.adult && !info.isAdult
+                && !window.LibreContentPolicy?.isAdultSource(info);
+        });
+        // Cache observed quality once; avoid repeated localStorage reads while sorting.
+        const scores=new Map(sources.map(id=>[id,window.LibreExperience?.qualityScore?.(id)||0]));
+        sources.sort((a,b)=>scores.get(b)-scores.get(a));
+        session.poolStats={total:sources.length,checked:0,matched:0};
         let next = 0;
         await Promise.all(Array.from({ length: Math.min(4, sources.length) }, async () => {
             while (next < sources.length) {
                 const found = await searchSource(sources[next++], session.request);
+                session.poolStats.checked++;
+                if(found.length)session.poolStats.matched++;
                 for (const item of found) if (!session.items.some(entry => entry.source_code === item.source_code && String(entry.vod_id) === String(item.vod_id))) session.items.push(item);
+                if(session.preparing && !session.manual && state===session)
+                    setStatus('正在找片：已检查 '+session.poolStats.checked+'/'+session.poolStats.total
+                        +' 个安全源，匹配 '+session.poolStats.matched+' 个');
                 if (session.manual && session.preparing && !session.choosingEpisode) renderChoices(session);
                 if (session.request.year && session.request.kind) {
                     const certain = session.items.find(item => identity(item).year === session.request.year && identity(item).kind === session.request.kind);
@@ -120,7 +149,9 @@
             button.onclick = () => { session.forced = item; session.choiceResolve?.(item); };
             list.appendChild(button);
         }
-        if (!items.length) list.textContent = session.done ? '没有找到匹配资源，可返回首页手动搜索。' : '正在搜索候选资源…';
+        if (!items.length) list.textContent = session.done
+            ? '已检查 '+(session.poolStats?.checked||0)+' 个源，未找到匹配影片。'
+            : '正在搜索：'+(session.poolStats?.checked||0)+'/'+(session.poolStats?.total||0)+' 个安全源…';
     }
     function waitForChoice(session, versions = false) {
         renderChoices(session, versions);
@@ -138,6 +169,11 @@
     async function select(item, session, resume = session.history) {
         const token = requestToken;
         const detail = await detailFor(item);
+        const videoInfo=detail.videoInfo||{};
+        if (window.LibreContentPolicy?.isAdultVideo({
+            vod_name:videoInfo.title,type_name:videoInfo.type,
+            vod_class:videoInfo.className,vod_remarks:videoInfo.remarks
+        })) throw new Error('该来源的影片分类被内容过滤规则拦截');
         if (token !== requestToken) throw new Error('已改为手动选择');
         let index = resume?.singleMovie && detail.episodes.length === 1 ? 0 : episodeIndex(detail, item, resume);
         if (index < 0 && session.preparing) {
@@ -188,7 +224,7 @@
         const params = new URLSearchParams(location.search);
         if (params.get('quick') !== '1') return true;
         if (state?.preparing) return false;
-        const request = Object.fromEntries(['title', 'year', 'kind', 'id', 'source'].map(key => [key, params.get(key) || '']));
+        const request = Object.fromEntries(['title', 'year', 'kind', 'id', 'source', 'scope'].map(key => [key, params.get(key) || '']));
         const session = { request, items: [], history: findHistory(read('viewingHistory', []), request), preparing: true, manual: false, played: false, retries: 0, tried: new Set() };
         state = session;
         setStatus('正在寻找播放资源…');
@@ -199,6 +235,10 @@
         let confirmed = false;
         const preferred = session.history;
         if (!request.id && preferred?.sourceName && preferred?.vod_id) { request.id = preferred.vod_id; request.source = preferred.sourceName; }
+        const permitted=window.LibreContentPolicy?.safeSourceIds?.(request.scope==='safe-all')
+            ||read('selectedAPIs',DEFAULT_SELECTED_APIS);
+        // A stale playback-history entry must not silently reintroduce a blocked source.
+        if(request.source && !permitted.includes(request.source)){request.source='';request.id='';}
         if (request.id && request.source) item = { vod_id: request.id, source_code: request.source, vod_name: request.title, vod_year: request.year, type_name: request.kind };
         else {
             item = await first;
@@ -389,5 +429,8 @@
         const index = Number(params.get('index') || 0);
         return { movieYear: params.get('year') || '', movieKind: params.get('kind') || '', episodeName: params.get('episodeName') || state?.current?.detail?.episodeNames?.[index] || '' };
     }
-    window.QuickPlay = { open, prepare, manual, stop, onError, attach, details, restart, historyInfo, cancelChoice, resolveSwitchIndex, currentDetail: () => state?.current?.detail || null, logic: { matches, groups, episodeIndex, findHistory, identity } };
+    window.QuickPlay = { open, prepare, manual, stop, onError, attach, details, restart, historyInfo, cancelChoice, resolveSwitchIndex,
+        findMatches:searchSource,
+        sourceProgress:()=>state?.poolStats?{...state.poolStats}:null,
+        currentDetail: () => state?.current?.detail || null, logic: { matches, groups, episodeIndex, findHistory, identity } };
 })();

@@ -103,20 +103,9 @@ test('verified customer API sources are available and invalid placeholders are r
   assert.equal(window.API_SITES.hhzy.api, 'https://hhzyapi.com/api.php/provide/vod');
   assert.equal(window.API_SITES.p2100.api, 'https://p2100.net/api.php/provide/vod');
   assert.equal(window.API_SITES.uku.api, 'https://api.ukuapi88.com/api.php/provide/vod');
-  assert.equal(window.API_SITES.ckzy.adult, true);
-  assert.equal(window.API_SITES.ckzy.api, 'https://www.ckzy1.com/api.php/provide/vod');
-  assert.equal(window.API_SITES.jkun.adult, true);
-  assert.equal(window.API_SITES.jkun.api, 'https://jkunzyapi.com/api.php/provide/vod');
-  assert.equal(window.API_SITES.bwzy.adult, true);
-  assert.equal(window.API_SITES.bwzy.api, 'https://api.bwzyz.com/api.php/provide/vod');
-  assert.equal(window.API_SITES.r155.adult, true);
-  assert.equal(window.API_SITES.r155.api, 'https://155api.com/api.php/provide/vod');
-  assert.equal(window.API_SITES.huangcang.adult, true);
-  assert.equal(window.API_SITES.huangcang.api, 'https://hsckzy.vip/api.php/provide/vod');
-  assert.equal(window.API_SITES.yutu.adult, true);
-  assert.equal(window.API_SITES.yutu.api, 'https://yutuzy10.com/api.php/provide/vod');
-  assert.equal(window.API_SITES.siwa.adult, true);
-  assert.equal(window.API_SITES.siwa.api, 'https://siwazyw.tv/api.php/provide/vod');
+  for (const id of ['ckzy', 'jkun', 'bwzy', 'r155', 'huangcang', 'yutu', 'siwa']) {
+    assert.equal(window.API_SITES[id], undefined, 'confirmed adult source must be removed: '+id);
+  }
   assert.equal(window.API_SITES.qiqi, undefined);
   assert.equal(window.API_SITES.testSource, undefined);
   assert.deepEqual(Array.from(window.DEFAULT_SELECTED_APIS), ['ffzy', 'guangsu', 'xinlang', 'ysgc', 'baofeng', 'hhzy', 'z360']);
@@ -459,7 +448,7 @@ test('source health selection includes all built-in and custom sources', async (
   const sourceIds = Array.from(sandbox.window.getHealthSourceIds());
 
   assert.deepEqual(sourceIds, [...builtInSourceIds, 'custom_0', 'custom_1']);
-  assert.ok(sourceIds.some(sourceId => sandbox.window.API_SITES[sourceId]?.adult));
+  assert.ok(sourceIds.every(sourceId => !sandbox.window.API_SITES[sourceId]?.adult));
 });
 
 test('source health checks run with a ten source concurrency limit', async () => {
@@ -707,7 +696,7 @@ test('search results require title relevance and ignored sources do not paginate
   const results = await sandbox.searchByAPIAndKeyWord('siwa', '世界的主人');
 
   assert.deepEqual(Array.from(results), []);
-  assert.equal(requestedUrls.filter(url => url.includes('siwazyw.tv')).length, 1);
+  assert.equal(requestedUrls.filter(url => url.includes('siwazyw.tv')).length, 0);
   assert.equal(requestedUrls.some(url => url.includes('pg=2')), false);
 });
 
@@ -751,8 +740,9 @@ test('player resource switch can search without loading homepage app script', as
   assert.equal(typeof sandbox.searchByAPIAndKeyWord, 'function');
   assert.equal(typeof sandbox.window.filterResultsByQuery, 'function');
   assert.match(player, /JSON\.stringify\(DEFAULT_SELECTED_APIS\)/);
-  assert.match(player, /Promise\.allSettled\(resourceOptions\.map/);
-  assert.match(player, /未找到可切换资源/);
+  assert.match(player, /Math\.min\(4,resourceOptions\.length\)/);
+  assert.match(player, /safeSourceIds/);
+  assert.match(player, /检查完成/);
 
   const results = await sandbox.searchByAPIAndKeyWord('ysgc', '世界的主人');
 
@@ -835,7 +825,7 @@ test('adult recommendation tag uses selected adult sources instead of Douban', a
 
   assert.equal(typeof sandbox.fetchLatestByAPI, 'function');
   const latest = await sandbox.fetchLatestByAPI('siwa', 2);
-  assert.deepEqual(Array.from(latest).map(item => item.source_code), ['siwa']);
+  assert.deepEqual(Array.from(latest).map(item => item.source_code), []);
 
   const renderPromise = sandbox.renderRecommend('成人视频', 16, 0);
   if (renderPromise && typeof renderPromise.then === 'function') {
@@ -844,7 +834,7 @@ test('adult recommendation tag uses selected adult sources instead of Douban', a
   await new Promise(resolve => setTimeout(resolve, 0));
 
   assert.equal(requestedUrls.some(url => url.includes('movie.douban.com')), false);
-  assert.equal(requestedUrls.some(url => url.includes('siwazyw.tv') && url.includes('ac=videolist') && url.includes('pg=')), true);
+  assert.equal(requestedUrls.some(url => url.includes('siwazyw.tv') && url.includes('ac=videolist') && url.includes('pg=')), false);
   assert.equal(requestedUrls.some(url => url.includes('wd=')), false);
 });
 
@@ -1240,7 +1230,7 @@ test('release metadata is bumped for this update', async () => {
   assert.equal(lockJson.version, '1.2.28');
   assert.equal(lockJson.packages[''].version, '1.2.28');
   assert.match(config, /version:\s*'1\.2\.28'/);
-  assert.match(serviceWorker, /const APP_VERSION = '20261015-nexus-v1'/);
+  assert.match(serviceWorker, /const APP_VERSION = '20261015-global-pool-v3'/);
   assert.match(serviceWorker, /'\/js\/player-recommendations\.js'/);
   assert.match(serviceWorker, /'\/js\/mobile-fullscreen\.js'/);
   assert.match(serviceWorker, /'\/css\/theme\.css'/);

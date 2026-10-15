@@ -100,5 +100,40 @@ test('mobile preset has its own versioned stylesheet and distinct accessible but
   assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(code,/aria-pressed/);
   assert.match(code,/lt-preset-button-title/);
-  assert.match(worker,/20261015-nexus-v1/);
+  assert.match(worker,/20261015-global-pool-v3/);
+});
+
+test('managed refresh preserves more than ten manually selected sources',async()=>{
+  const sources=Array.from({length:12},(_,i)=>({
+    id:'managed_s'+i,name:'影视'+i,
+    api:'https://example'+i+'.org/api.php/provide/vod',searchable:true
+  }));
+  const selected=sources.map(source=>source.id);
+  const store=new Map([
+    ['libretv:active-preset','managed'],
+    ['selectedAPIs',JSON.stringify(selected)],
+    ['libretv:preset-managed-initialized','yes'],
+    ['libretv:managed-cache:v1',JSON.stringify({sources,syncedAt:Date.now()})]
+  ]);
+  const {window}=setup(store);
+  await window.LibreProfiles.refresh();
+  assert.deepEqual(JSON.parse(store.get('selectedAPIs')),selected);
+  assert.equal(window.LibreProfiles.managedCount(),12);
+});
+
+test('local preset keeps its checkboxes while loading 100 cached remote sources',async()=>{
+  const sources=Array.from({length:100},(_,i)=>({
+    id:'managed_'+(1000+i).toString(36),name:'订阅'+i,
+    api:'https://vod'+i+'.example/api.php/provide/vod',searchable:true
+  }));
+  const store=new Map([
+    ['selectedAPIs','["ffzy"]'],
+    ['libretv:managed-cache:v1',JSON.stringify({sources,syncedAt:Date.now()})]
+  ]);
+  const {window,API_SITES}=setup(store);
+  await window.LibreProfiles.refresh();
+  assert.equal(window.LibreProfiles.active,'local');
+  assert.equal(window.LibreProfiles.managedCount(),100);
+  assert.ok(API_SITES[sources[99].id]);
+  assert.deepEqual(JSON.parse(store.get('selectedAPIs')),['ffzy']);
 });

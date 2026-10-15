@@ -27,8 +27,8 @@
     const unique=new Set();
     remote=(Array.isArray(rows)?rows:[]).filter(valid)
       .filter(e=>!rootIsAdultSource(e))
-      .filter(e=>{if(unique.has(e.id))return false;unique.add(e.id);return true;}).slice(0,75);
-    for(const entry of remote)API_SITES[entry.id]={name:entry.name.slice(0,65),api:entry.api,managed:true};
+      .filter(e=>{if(unique.has(e.id))return false;unique.add(e.id);return true;}).slice(0,300);
+    for(const entry of remote)API_SITES[entry.id]={name:entry.name.slice(0,65),api:entry.api,managed:true,searchable:entry.searchable!==false};
   }
   function loadCache(){
     try{
@@ -88,7 +88,14 @@
        ?'维护者订阅：'+remote.length+' 个兼容候选 · '+(lastSync?'最近同步 '+new Date(lastSync).toLocaleString('zh-CN'):'已读取缓存')
        :'正在加载订阅源…';
   }
+  let refreshInFlight=null;
   async function refresh(force=false){
+    if(refreshInFlight)return refreshInFlight;
+    const job=performRefresh(force);
+    refreshInFlight=job;
+    try{return await job;}finally{if(refreshInFlight===job)refreshInFlight=null;}
+  }
+  async function performRefresh(force=false){
     if(!force&&lastSync&&Date.now()-lastSync<refreshEvery){
       updateSelection(remote);
       dispatch();return;
@@ -146,6 +153,8 @@
   window.LibreProfiles={active,visibleIds,switchTo,refresh,presets,managedCount:()=>remote.length};
   document.addEventListener('DOMContentLoaded',()=>{
     render();
-    if(active==='managed'&&document.getElementById('searchArea'))refresh();
+    // Refresh the subscription in either preset and on the player, without changing
+    // the current preset's checked sources. The playback pool uses the shared registry.
+    void refresh();
   });
 })();
