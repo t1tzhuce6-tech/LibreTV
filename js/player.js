@@ -2671,7 +2671,7 @@ window.cancelResourceSwitchSpeedChecks = () => {
 };
 
 // 测量一个来源首个可播放媒体片段的实际传输速率。
-async function testVideoSourceSpeed(sourceKey, vodId, signal) {
+async function testVideoSourceSpeed(sourceKey, vodId, signal, onPlaylistInfo) {
     try {
         // 构建API参数
         let apiParams = '';
@@ -2711,11 +2711,15 @@ async function testVideoSourceSpeed(sourceKey, vodId, signal) {
             return { kbps: -1, error: '无播放源' };
         }
         
-        const firstEpisodeUrl = data.episodes.find(isDirectPlayableVideoUrl);
+        // Prefer the episode currently being watched; fall back to the first playable
+        // entry when the candidate source has different episode numbering.
+        const sameEpisode = data.episodes[currentEpisodeIndex];
+        const firstEpisodeUrl = isDirectPlayableVideoUrl(sameEpisode)
+            ? sameEpisode : data.episodes.find(isDirectPlayableVideoUrl);
         if (!firstEpisodeUrl) {
             return { kbps: -1, error: '链接无效' };
         }
-        const sample = await window.SourceSpeed.probeEpisodeUrl(firstEpisodeUrl, { signal });
+        const sample = await window.SourceSpeed.probeEpisodeUrl(firstEpisodeUrl, { signal, onPlaylistInfo });
         return { ...sample, episodes: data.episodes.length, error: null };
     } catch (error) {
         return { kbps: -1, error: error.name === 'AbortError' || error.message === '测速超时' ? '测速超时，可试播' : '未能测速，可试播' };
@@ -2788,9 +2792,18 @@ async function showSwitchResourceModal() {
         while (running < 3 && probeQueue.length && !probeController.signal.aborted) {
             const {source, result, row} = probeQueue.shift();
             running++;
-            void testVideoSourceSpeed(source, result.vod_id, probeController.signal).then(measured => {
+            const resolutionBadge = row.querySelector('[data-resolution-badge]');
+            const showDeclared = resolution => {
+                if (probeController.signal.aborted || resourceSwitchProbeController !== probeController) return;
+                if (resolutionBadge.dataset.type === 'decoded' || !resolution?.width || !resolution?.height) return;
+                resolutionBadge.textContent = `${resolution.width}×${resolution.height} · 清单声明`;
+                resolutionBadge.dataset.type = 'manifest';
+            };
+            void testVideoSourceSpeed(source, result.vod_id, probeController.signal, showDeclared).then(measured => {
                 if (probeController.signal.aborted || resourceSwitchProbeController !== probeController) return;
                 row.querySelector('[data-speed-badge]').innerHTML = formatSpeedDisplay(measured);
+                showDeclared(measured.resolution);
+                if (!resolutionBadge.dataset.type) resolutionBadge.textContent = '分辨率未知';
                 if (measured.episodes) row.querySelector('[data-episode-count]').textContent = `${measured.episodes}集`;
             }).finally(() => { running--; pump(); });
         }
@@ -2806,14 +2819,30 @@ async function showSwitchResourceModal() {
         const sourceName = resourceOptions.find(opt => opt.key === source)?.name || API_SITES[source]?.name || '未知资源';
         row.innerHTML = `<div class="resource-switch-row-main"><strong>${escapeHtmlAttr(sourceName)}</strong>
             ${isCurrent ? '<span class="resource-current-label">当前播放</span>' : ''}<small data-episode-count>集数待确认</small></div>
-            <div class="resource-switch-row-meta"><span data-speed-badge>${formatSpeedDisplay(null)}</span></div>`;
+            <div class="resource-switch-row-meta"><span class="resource-resolution" data-resolution-badge>分辨率读取中…</span><span data-speed-badge>${formatSpeedDisplay(null)}</span></div>`;
         if (!isCurrent) {
             const button = document.createElement('button');
             button.type = 'button'; button.className = 'resource-switch-choose'; button.textContent = '切换';
             button.onclick = () => switchToResource(source, result.vod_id);
             row.querySelector('.resource-switch-row-meta').appendChild(button);
         }
-        if (isCurrent) list.prepend(row); else list.appendChild(row);
+        if (isCurrent) {
+            list.prepend(row);
+            const media = art?.video;
+            if (media) {
+                const updateDecodedResolution = () => {
+                    if (probeController.signal.aborted || resourceSwitchProbeController !== probeController) return;
+                    if (media.videoWidth > 0 && media.videoHeight > 0) {
+                        const badge = row.querySelector('[data-resolution-badge]');
+                        badge.textContent = `${media.videoWidth}×${media.videoHeight} · 实际解码`;
+                        badge.dataset.type = 'decoded';
+                    }
+                };
+                updateDecodedResolution();
+                media.addEventListener('loadedmetadata', updateDecodedResolution, { signal: probeController.signal });
+                media.addEventListener('resize', updateDecodedResolution, { signal: probeController.signal });
+            }
+        } else list.appendChild(row);
         probeQueue.push({source, result, row});
         pump();
     };

@@ -162,6 +162,7 @@
         const lines = content.split(/\r?\n/).map(line => line.trim());
         let bestVariant = '';
         let bestBandwidth = -1;
+        let bestResolution = null;
         const segments = [];
         let pendingDuration = 0;
         let pendingByteLength = 0;
@@ -173,6 +174,10 @@
                 if (variant && bandwidth >= bestBandwidth) {
                     bestVariant = variant;
                     bestBandwidth = bandwidth;
+                    const match = line.match(/(?:^|,)RESOLUTION=(\d{2,5})x(\d{2,5})(?:,|$)/i);
+                    const width = Number(match?.[1]), height = Number(match?.[2]);
+                    bestResolution = width >= 100 && width <= 16384 && height >= 100 && height <= 16384
+                        ? { width, height } : null;
                 }
             } else if (line.startsWith('#EXTINF:')) {
                 pendingDuration = Number.parseFloat(line.slice(8)) || 0;
@@ -190,7 +195,8 @@
             return {
                 kind: 'master',
                 url: resolvePlaylistUrl(bestVariant, baseUrl),
-                bandwidth: bestBandwidth > 0 ? bestBandwidth : 0
+                bandwidth: bestBandwidth > 0 ? bestBandwidth : 0,
+                resolution: bestResolution
             };
         }
         if (segments.length === 0) throw new Error('播放列表没有媒体片段');
@@ -233,6 +239,7 @@
         if (!['http:', 'https:'].includes(url.protocol)) throw new Error('播放链接无效');
         if (!forcePlaylist && !/\.m3u8$/i.test(url.pathname)) return { segmentUrl: url.toString(), bandwidth: 0, duration: 0, segmentBytes: 0 };
         let bandwidth = 0;
+        let resolution = null;
         for (let depth = 0; depth < 4; depth++) {
             const sample = await fetchWithFallback(url.toString(), signal, true);
             const text = playlistText(sample);
@@ -242,18 +249,20 @@
                 return {
                     segmentUrl: parsed.url,
                     bandwidth,
+                    resolution,
                     duration: parsed.duration,
                     // -1: the file size must not be used as the segment size.
                     segmentBytes: parsed.byteLength || (parsed.usesByteRanges ? -1 : 0)
                 };
             }
             bandwidth = parsed.bandwidth || bandwidth;
+            resolution = parsed.resolution || resolution;
             url = new URL(parsed.url);
         }
         throw new Error('播放列表嵌套过深');
     }
 
-    async function probeEpisodeUrl(episodeUrl, { signal } = {}) {
+    async function probeEpisodeUrl(episodeUrl, { signal, onPlaylistInfo } = {}) {
         const playlistGuard = linkSignals(signal, PLAYLIST_TIMEOUT_MS);
         let target;
         try {
@@ -265,6 +274,10 @@
             playlistGuard.dispose();
         }
 
+        // Manifest metadata can update the UI before the serialized media-speed probe.
+        if (target.resolution && !signal?.aborted && typeof onPlaylistInfo === 'function') {
+            try { onPlaylistInfo({ ...target.resolution }); } catch { /* presentation callback */ }
+        }
         return withMediaSlot(async () => {
             if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
             const sampleGuard = linkSignals(signal, SAMPLE_TIMEOUT_MS);
@@ -290,6 +303,7 @@
                     latencyMs: Math.round(sample.latencyMs),
                     kbps,
                     bitrateKbps,
+                    resolution: target.resolution || null,
                     headroom: Math.round(headroom * 10) / 10,
                     verdict,
                     transport: sample.transport

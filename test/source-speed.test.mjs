@@ -228,3 +228,73 @@ test('Cloudflare proxy streams authorized range probes up to 2 MiB without cachi
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test('HLS master resolution is reported before media sampling and is not inferred from speed', async () => {
+  const requests=[];
+  let reported;
+  const source=await loadSourceSpeed(async (url,options)=>{
+    const {target}=parseRequest(url,options);
+    requests.push(target);
+    if(target.endsWith('master.m3u8'))return new Response(
+      '#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=950000,RESOLUTION=640x360\nlow.m3u8\n' +
+      '#EXT-X-STREAM-INF:BANDWIDTH=3800000,RESOLUTION=1920x816\nhi.m3u8\n',
+      {headers:{'Content-Type':'application/vnd.apple.mpegurl'}});
+    if(target.endsWith('hi.m3u8'))return new Response(longMediaPlaylist(5),{
+      headers:{'Content-Type':'application/vnd.apple.mpegurl'}
+    });
+    return new Response(new Uint8Array(128*1024),{headers:{'Content-Type':'video/mp2t'}});
+  });
+  const result=await source.probeEpisodeUrl('https://cdn.example/master.m3u8',{
+    onPlaylistInfo:res=>{
+      assert.equal(requests.length,2,'resolution should appear before segment download');
+      reported=res;
+    }
+  });
+  assert.deepEqual({...reported},{width:1920,height:816});
+  assert.deepEqual({...result.resolution},{width:1920,height:816});
+  assert.equal(result.bitrateKbps,3800);
+});
+
+test('no HLS RESOLUTION metadata must remain unknown even with a high speed score',async()=>{
+  const source=await loadSourceSpeed(async (url,options)=>{
+    const {target}=parseRequest(url,options);
+    if(target.endsWith('.m3u8'))return new Response(longMediaPlaylist(3),{
+      headers:{'Content-Type':'application/vnd.apple.mpegurl'}
+    });
+    return new Response(new Uint8Array(256*1024),{headers:{'Content-Type':'video/mp2t'}});
+  });
+  let callbackCount=0;
+  const result=await source.probeEpisodeUrl('https://cdn.example/movie.m3u8',{
+    onPlaylistInfo:()=>callbackCount++
+  });
+  assert.equal(result.resolution,null);
+  assert.equal(callbackCount,0);
+  assert.ok(result.kbps>0);
+});
+
+test('nested HLS master uses the selected innermost manifest resolution',async()=>{
+  const source=await loadSourceSpeed(async (url,options)=>{
+    const {target}=parseRequest(url,options);
+    if(target.endsWith('/outer.m3u8'))return new Response('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080\ninner.m3u8\n',{headers:{'Content-Type':'application/vnd.apple.mpegurl'}});
+    if(target.endsWith('/inner.m3u8'))return new Response('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1280x720\nreal.m3u8\n',{headers:{'Content-Type':'application/vnd.apple.mpegurl'}});
+    if(target.endsWith('/real.m3u8'))return new Response(longMediaPlaylist(3),{headers:{'Content-Type':'application/vnd.apple.mpegurl'}});
+    return new Response(new Uint8Array(192*1024),{headers:{'Content-Type':'video/mp2t'}});
+  });
+  const r=await source.probeEpisodeUrl('https://cdn.example/outer.m3u8');
+  assert.deepEqual({...r.resolution},{width:1280,height:720});
+});
+
+
+test('switch UI distinguishes real decoded size from unplayed manifest metadata', async()=>{
+  const source=await readFile(path.join(rootDir,'js/player.js'),'utf8');
+  const css=await readFile(path.join(rootDir,'css/player.css'),'utf8');
+  assert.match(source,/data-resolution-badge/);
+  assert.match(source,/清单声明/);
+  assert.match(source,/实际解码/);
+  assert.match(source,/media\.videoWidth/);
+  assert.match(source,/media\.videoHeight/);
+  assert.match(source,/addEventListener\('resize', updateDecodedResolution/);
+  assert.match(source,/onPlaylistInfo/);
+  assert.match(css,/resource-resolution\[data-type="decoded"\]/);
+});
