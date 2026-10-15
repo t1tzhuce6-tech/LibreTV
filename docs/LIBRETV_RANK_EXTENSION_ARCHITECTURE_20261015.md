@@ -37,3 +37,15 @@
 - 搜索并发保持4路、每源6500ms超时并最多查3页；换源匹配结果逐步出现，不必全部搜完再显示；历史播放质量评分影响查找优先级。
 - “有HLS地址/标称高清”不等于首帧实测；高速、画质、不卡顿仍需浏览器授权播放验证，无法保证每条第三方源稳定。
 - 在草稿PR中，未合并至正式 main，线上截图显示的是旧版行为。
+
+## 2026-10-15 预览和 Edge 浏览器验收补充
+- Cloudflare Pages 项目：libretv-private-20261013。GitHub 部署预览此前设为 none，造成预览记录 queued/idle 且 404。
+- 仅将预览配置改为 custom，并只允许 fix/iqiyi-safe-source-pool-20261015，正式分支 main 和生产部署设置不变。
+- 重试 ae0d888 的预览部署后 Cloudflare 构建/部署成功，URL：https://2fa23f59.libretv-private-20261013.pages.dev/。
+- HTTP 实测：首页、js/rank-bridge.js、js/quick-play.js、js/player.js、js/content-policy.js、service-worker.js、爱奇艺榜单API和27源订阅均返回200；部署传播初期短暂404，复查已恢复。
+- Windows Edge 独立测试配置文件真实加载预览：首页注册49源，过滤去重后42个安全候选；local方案只勾选7源；播放器同样42候选；榜单桥传递正确 title/year/kind/scope。
+- Edge 换源弹窗交互测试（注意：搜索结果使用模拟响应，不是真实播放测试）：实际走遍42个互不重复的源，2个模拟匹配则渲染2条来源和2个「切换」按钮，状态显示“检查完成：42个源，匹配2个”。
+- Cloudflare预览环境缺少 PASSWORD/PASSWORD_HASH，生产环境有 PASSWORD(secret_text)；预览代理 /proxy/ 请求确认为401。不得把401当成源失效。
+- 暂未完成带授权身份的实机检索→详情→视频首帧→卡顿/分辨率及iPhone缓存验证。预览无授权代理，因此 PR #21 应保持 Draft，不自动合并 main。
+- 待独立审查：旧代理鉴权由 HTML 注入密码哈希，浏览器代理请求将该哈希用于认证，需核查对外公开的哈希是否足够保护代理。未因本次排查修改密码或生产环境。
+- GitHub当前无关联PR触发的GitHub Actions workflow run；本地 npm test 121/121通过，不能视为GitHub CI已通过。
