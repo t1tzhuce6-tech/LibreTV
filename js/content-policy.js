@@ -29,24 +29,40 @@
   }
   // The viewer requested an always-on content filter (including old scheme-local preferences).
   try{root.localStorage?.setItem('yellowFilterEnabled','true');}catch{}
-  // A chart can search the full active scheme without altering the user's checkboxes.
+  // Playback uses every registered safe source, regardless of checkbox state or preset.
+  // User checkboxes still set search priority and remain independent in each preset.
   function safeSourceIds(includeAvailable=false){
-    let selected=[];
+    let selected=[],custom=[];
     try{
       const raw=root.localStorage?.getItem('selectedAPIs');
       const stored=raw==null?(root.DEFAULT_SELECTED_APIS||[]):JSON.parse(raw);
       if(Array.isArray(stored))selected=stored;
     }catch{}
-    const available=includeAvailable
-      ?(root.LibreProfiles?.visibleIds?.()||root.DEFAULT_SELECTED_APIS||[]):[];
-    const candidates=includeAvailable
-      ?[...selected.filter(id=>available.includes(id)||id.startsWith('custom_')),...available]
-      :selected;
+    if(includeAvailable){
+      try{
+        const stored=JSON.parse(root.localStorage?.getItem('customAPIs')||'[]');
+        if(Array.isArray(stored))custom=stored.map((_,i)=>'custom_'+i);
+      }catch{}
+    }
+    const registered=includeAvailable?Object.keys(root.API_SITES||{}):[];
+    const candidates=[...selected,...registered,...custom];
+    const used=new Set();
     return [...new Set(candidates)].filter(id=>{
       if(typeof id!=='string')return false;
       const info=id.startsWith('custom_')
         ?root.getCustomApiInfo?.(id.slice(7)):root.API_SITES?.[id];
-      return !!info&&info.searchable!==false&&!isAdultSource(info);
+      if(!info||info.searchable===false||isAdultSource(info))return false;
+      const api=String(info.api||info.url||'').trim();
+      if(!api)return false;
+      let key;
+      try{
+        const url=new URL(api);
+        if(!['http:','https:'].includes(url.protocol)||url.username||url.password)return false;
+        key=(url.origin+url.pathname.replace(new RegExp('/+$'),'')+url.search).toLowerCase();
+      }catch{return false;}
+      if(used.has(key))return false;
+      used.add(key);
+      return true;
     });
   }
   root.LibreContentPolicy=Object.freeze({

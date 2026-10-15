@@ -36,7 +36,7 @@ export function convertHealthyFeed(feed){
     const name=String(row.name||row.key||'未命名源').replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,65);
     if(isAdultManagedSource(name,api))continue;
     sources.push({id:idFor(api),name:name||'未命名源',api,searchable:row.searchable!==0});
-    if(sources.length>=75)break;
+    if(sources.length>=300)break;
   }
   return {provider:'hebijunge/tvbox-config',updated_at:String(feed?.updated_at||''),sources};
 }

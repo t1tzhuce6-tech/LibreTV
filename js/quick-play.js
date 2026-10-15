@@ -100,6 +100,8 @@
         }catch{return [];}finally{clearTimeout(timer);}
     }
     async function discover(session) {
+        if(session.request.scope==='safe-all')
+            await window.LibreProfiles?.refresh?.();
         const selected = read('selectedAPIs', DEFAULT_SELECTED_APIS);
         const broaden = session.request.scope === 'safe-all';
         const eligible = window.LibreContentPolicy?.safeSourceIds?.(broaden) || selected;
@@ -109,6 +111,9 @@
             return !!info && info.searchable !== false && !info.adult && !info.isAdult
                 && !window.LibreContentPolicy?.isAdultSource(info);
         });
+        // Cache observed quality once; avoid repeated localStorage reads while sorting.
+        const scores=new Map(sources.map(id=>[id,window.LibreExperience?.qualityScore?.(id)||0]));
+        sources.sort((a,b)=>scores.get(b)-scores.get(a));
         session.poolStats={total:sources.length,checked:0,matched:0};
         let next = 0;
         await Promise.all(Array.from({ length: Math.min(4, sources.length) }, async () => {

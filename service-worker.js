@@ -1,4 +1,4 @@
-const APP_VERSION = '20261015-ranking-bridge-v2';
+const APP_VERSION = '20261015-global-pool-v3';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
