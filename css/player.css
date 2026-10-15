@@ -619,6 +619,9 @@ input:checked + .slider:before {
 .resource-switch-row-main small { color:#bdc8da; }
 .resource-current-label { color:#9bd3ff; font-size:.78rem; }
 .resource-switch-row-meta { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:.45rem; font-size:.8rem; }
+.resource-resolution { color:#bdc8da; font-size:.78rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.resource-resolution[data-type="manifest"] { color:#a9cfff; }
+.resource-resolution[data-type="decoded"] { color:#9be4b8; font-weight:600; }
 .resource-switch-choose,.quick-more-actions button { min-height:44px; padding:.5rem .85rem; border:1px solid #5c6b86; background:#24344f; color:white; border-radius:9px; }
 .quick-more-actions[hidden] { display:none!important; }
 .quick-more-actions { display:flex; flex-wrap:wrap; gap:.55rem; padding:.8rem; margin:.4rem 0; }
