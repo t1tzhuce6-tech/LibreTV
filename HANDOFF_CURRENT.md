@@ -91,3 +91,10 @@ GitHub：https://github.com/t1tzhuce6-tech/LibreTV
 本轮直接核对和修复方案参见 docs/LIBRETV_SOURCE_POOL_P0_AUDIT_20261015.md。
 分支 fix/iqiyi-safe-source-pool-20261015 从 origin/main 82eb484 建立：排除成人源、扩大榜单播放安全源池、无需返回首页修改勾选即可换源。
 本文写入时尚未合并/部署；本地114项测试通过，不等于生产站已完成授权浏览器首帧及移动端验收。通过 PR 合并后必须再核查。
+
+## 10. 官方榜单可复用入口与片源可见性（2026-10-15）
+参见 docs/LIBRETV_RANK_EXTENSION_ARCHITECTURE_20261015.md。已在 PR #21 的同一功能分支继续开发：
+新增 js/rank-bridge.js 为官方榜单的统一播放桥，爱奇艺先接入；QuickPlay 搜索增加限时的第2/3页补漏；
+QuickPlay 和播放器换源弹窗显示片源总数、已检查数、匹配数，禁止过期播放历史绕开当前安全片源池；
+方案二刷新后保留十多个手动选择源有新增回归测试。upstream Git remote 指向 wxst/LibreTV，但没有合并上游代码。
+未合并到 main、未部署生产，最终线上实机首帧/换源/高速高清验收仍待完成。

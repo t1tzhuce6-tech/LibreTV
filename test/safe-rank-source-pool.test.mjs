@@ -60,7 +60,7 @@ test('iQIYI uses full safe source scope through player and keeps source switchin
   const rank=fs.readFileSync(root+'js/iqiyi-ranks.js','utf8');
   const quick=fs.readFileSync(root+'js/quick-play.js','utf8');
   const player=fs.readFileSync(root+'js/player.js','utf8');
-  assert.match(rank,/scope:'safe-all'/);
+  assert.ok(rank.includes("LibreRankBridge?.register('iqiyi'"));
   assert.match(quick,/url.searchParams.set\('scope', request.scope \|\| 'safe-all'\)/);
   assert.match(quick,/safeSourceIds\?\.\(broaden\)/);
   assert.match(player,/safeSourceIds\?\.\(urlParams.get\('scope'\) === 'safe-all'\)/);

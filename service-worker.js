@@ -1,4 +1,4 @@
-const APP_VERSION = '20261015-safe-sources-v1';
+const APP_VERSION = '20261015-ranking-bridge-v2';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -35,6 +35,7 @@ const APP_SHELL_ASSETS = [
   '/js/customer_site.js',
   '/js/content-policy.js',
   '/js/hot-list.js',
+  '/js/rank-bridge.js',
   '/js/iqiyi-ranks.js',
   '/js/nexus-lists.js',
   '/js/curated-lists.js',

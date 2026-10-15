@@ -57,7 +57,7 @@ test('fetches real iQIYI structured data from bounded upstream, not HTML scrapin
   }finally{globalThis.fetch=original;}
 });
 test('front end isolates own rankings, appends and reuses QuickPlay',()=>{
-  assert.match(site,/window\.QuickPlay\.open\(/);
+  assert.ok(site.includes("LibreRankBridge?.open('iqiyi',item)"));
   assert.match(site,/ltIqiMore/);
   assert.match(site,/IntersectionObserver/);
   assert.match(site,/ids\.has\(item\.id\)/);
