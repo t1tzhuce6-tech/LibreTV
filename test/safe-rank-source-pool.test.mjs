@@ -91,3 +91,27 @@ test('healthy feed does not silently truncate at twelve or seventy-five',()=>{
   const feed=convertHealthyFeed({sites});
   assert.equal(feed.sources.length,100);
 });
+
+test('adult-only APIs under neutral names cannot reenter from remote subscriptions or stale browser presets',()=>{
+  const adultHosts=[
+    'heiliaozyapi.com','www.heiliaozyapi.com','api.ddapi.cc','api.heiapi.cc',
+    'www.jingpinx.com','naixxzy.com','apilj.com','shayuapi.com','fqzy.me'
+  ];
+  const sites=adultHosts.map((host,i)=>({
+    type:1,name:'普通影音站'+i,api:'https://'+host+'/api.php/provide/vod'
+  }));
+  sites.push({type:1,name:'光速资源',api:'https://api.guangsuapi.com/api.php/provide/vod'});
+  sites.push({type:1,name:'非凡资源',api:'https://cj.ffzyapi.com/api.php/provide/vod'});
+  const filtered=convertHealthyFeed({sites});
+  assert.deepEqual(filtered.sources.map(x=>x.name),['光速资源','非凡资源']);
+  for(const site of sites.slice(0,adultHosts.length)){
+    assert.equal(isAdultManagedSource(site.name,site.api),true,site.api);
+  }
+  const registry=Object.fromEntries(sites.map((s,i)=>['s'+i,{name:s.name,api:s.api}]));
+  const {policy:p}=policy(Object.keys(registry),Object.keys(registry),registry,[
+    {name:'伪装自定义正常源',url:'https://api.ddapi.cc/api.php/provide/vod'}
+  ]);
+  assert.deepEqual(Array.from(p.safeSourceIds(true)),['s9','s10']);
+  assert.equal(p.isAdultSource({name:'正常名称',api:'https://fqzy.me/api.php/provide/vod'}),true);
+  assert.equal(p.isAdultSource({name:'非凡资源',api:'https://cj.ffzyapi.com/api.php/provide/vod'}),false);
+});

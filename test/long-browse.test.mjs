@@ -32,7 +32,7 @@ test('assets use fresh versions and mobile shows two main choices',()=>{
   const home=fs.readFileSync(root+'index.html','utf8');
   const sw=fs.readFileSync(root+'service-worker.js','utf8');
   assert.match(home,/20261014long1/);
-  assert.match(sw,/20261015-resolution-v4/);
+  assert.match(sw,/20261015-adult-clean-v5/);
   assert.match(style,/lt-hotlist-featured/);
   assert.match(style,/lt-hotlist-more/);
 });

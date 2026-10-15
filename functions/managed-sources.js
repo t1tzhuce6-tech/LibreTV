@@ -6,7 +6,9 @@ const blockedAdultNames=/(?:色情|成人|情色|三级|福利|麻豆|杏吧|蝙
 const blockedAdultHosts=new Set([
   'www.ckzy1.com','ckzy.me','jkunzyapi.com','api.bwzyz.com','155api.com',
   'hsckzy.vip','yutuzy10.com','siwazyw.tv','xingba222.com','jipinvip.com',
-  'thzy1.me','api.11bat.com','apilsbzy1.com'
+  'thzy1.me','api.11bat.com','apilsbzy1.com',
+  'heiliaozyapi.com','www.heiliaozyapi.com','api.ddapi.cc','api.heiapi.cc',
+  'www.jingpinx.com','jingpinx.com','naixxzy.com','apilj.com','shayuapi.com','fqzy.me'
 ]);
 export function isAdultManagedSource(name,api){
   if(blockedAdultNames.test(String(name||'')))return true;
