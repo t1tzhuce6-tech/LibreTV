@@ -2,6 +2,17 @@
 // Only the configuration JSON passes through Cloudflare; media is never fetched here.
 const UPSTREAM='https://raw.githubusercontent.com/hebijunge/tvbox-config/main/exports/healthy.json';
 const allowed=/\/(?:api\.php\/)?provide\/vod\/?$/i;
+const blockedAdultNames=/(?:色情|成人|情色|三级|福利|麻豆|杏吧|蝙蝠|桃花|色逼|极品|av资源|成人资源|18\+|porn|xxx|explicit|\bsex\b|\badult\b|ckzy|jkun|^155\s*(?:\||资源))/i;
+const blockedAdultHosts=new Set([
+  'www.ckzy1.com','ckzy.me','jkunzyapi.com','api.bwzyz.com','155api.com',
+  'hsckzy.vip','yutuzy10.com','siwazyw.tv','xingba222.com','jipinvip.com',
+  'thzy1.me','api.11bat.com','apilsbzy1.com'
+]);
+export function isAdultManagedSource(name,api){
+  if(blockedAdultNames.test(String(name||'')))return true;
+  try{return blockedAdultHosts.has(new URL(api).hostname.toLowerCase());}
+  catch{return true;}
+}
 function normalizeApi(raw){
   if(typeof raw!=='string'||raw.length>600)return null;
   let url;try{url=new URL(raw.trim());}catch{return null;}
@@ -23,6 +34,7 @@ export function convertHealthyFeed(feed){
     const api=normalizeApi(row.api);if(!api||seen.has(api))continue;
     seen.add(api);
     const name=String(row.name||row.key||'未命名源').replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,65);
+    if(isAdultManagedSource(name,api))continue;
     sources.push({id:idFor(api),name:name||'未命名源',api,searchable:row.searchable!==0});
     if(sources.length>=75)break;
   }

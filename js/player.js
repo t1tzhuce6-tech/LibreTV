@@ -2755,7 +2755,8 @@ async function showSwitchResourceModal() {
     modal.classList.remove('hidden');
 
     // 搜索
-    const resourceOptions = selectedAPIs.map((curr) => {
+    const candidateIds = window.LibreContentPolicy?.safeSourceIds?.(urlParams.get('scope') === 'safe-all') || selectedAPIs;
+    const resourceOptions = candidateIds.map((curr) => {
         if (API_SITES[curr]) {
             return { key: curr, name: API_SITES[curr].name };
         }
@@ -2812,16 +2813,24 @@ async function showSwitchResourceModal() {
         probeQueue.push({source, result, row});
         pump();
     };
-    if (currentSourceCode && currentVideoId) addResult(currentSourceCode, {vod_id:currentVideoId});
-    await Promise.allSettled(resourceOptions.map(async opt => {
-        await searchByAPIAndKeyWord(opt.key, currentVideoTitle, batch => {
-            if (probeController.signal.aborted || seen.has(opt.key)) return;
-            const result = batch.find(item => {
-                const info = QuickPlay.logic.identity(item);
-                return QuickPlay.logic.matches(item, request) && (!request.year || info.year === request.year) && (!request.kind || info.kind === request.kind);
-            });
-            if (result) addResult(opt.key, result);
-        }, probeController.signal);
+    if (currentSourceCode && currentVideoId && candidateIds.includes(currentSourceCode))
+        addResult(currentSourceCode, {vod_id:currentVideoId});
+    let sourceCursor = 0;
+    await Promise.allSettled(Array.from({length:Math.min(4,resourceOptions.length)},async()=>{
+        while(sourceCursor<resourceOptions.length && !probeController.signal.aborted){
+            const opt=resourceOptions[sourceCursor++];
+            await searchByAPIAndKeyWord(opt.key, currentVideoTitle, batch => {
+                if(probeController.signal.aborted || seen.has(opt.key))return;
+                const result=batch.find(item=>{
+                    const info=QuickPlay.logic.identity(item);
+                    return !window.LibreContentPolicy?.isAdultVideo(item)
+                        && QuickPlay.logic.matches(item,request)
+                        && (!request.year || info.year===request.year)
+                        && (!request.kind || info.kind===request.kind);
+                });
+                if(result)addResult(opt.key,result);
+            },probeController.signal);
+        }
     }));
     if (probeController.signal.aborted) return;
     progress.textContent = seen.size ? `已找到 ${seen.size} 个来源；测速仅供参考` : '未找到可切换资源，请稍后重试或更换片名搜索。';
@@ -2865,9 +2874,18 @@ async function switchToResource(sourceKey, vodId) {
         const timestamp = new Date().getTime();
         const cacheBuster = `&_t=${timestamp}`;
         const response = await fetch(`/api/detail?id=${encodeURIComponent(vodId)}${apiParams}${cacheBuster}`);
-        
+
         const data = await response.json();
-        
+        const info=data.videoInfo||{};
+        if(window.LibreContentPolicy?.isAdultVideo({
+            vod_name:info.title,type_name:info.type,
+            vod_class:info.className,vod_remarks:info.remarks
+        })){
+            showToast('该来源的分类被内容过滤规则拦截','warning');
+            hideLoading();
+            return;
+        }
+
         if (!data.episodes || data.episodes.length === 0) {
             showToast('未找到播放资源', 'error');
             hideLoading();
@@ -2905,7 +2923,7 @@ async function switchToResource(sourceKey, vodId) {
         // 跳转到播放页面
         const destination = new URL(watchUrl, location.origin);
         const currentParams = new URLSearchParams(location.search);
-        for (const key of ['year', 'kind']) if (currentParams.get(key)) destination.searchParams.set(key, currentParams.get(key));
+        for (const key of ['year', 'kind', 'scope']) if (currentParams.get(key)) destination.searchParams.set(key, currentParams.get(key));
         destination.searchParams.set('episodeName', data.episodeNames?.[targetIndex] || '');
         if (!sameEpisode && currentParams.get('kind') !== 'movie') destination.searchParams.delete('position');
         destination.pathname = '/player.html';

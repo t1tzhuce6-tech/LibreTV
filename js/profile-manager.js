@@ -28,7 +28,7 @@
     remote=(Array.isArray(rows)?rows:[]).filter(valid)
       .filter(e=>!rootIsAdultSource(e))
       .filter(e=>{if(unique.has(e.id))return false;unique.add(e.id);return true;}).slice(0,75);
-    for(const entry of remote)API_SITES[entry.id]={name:entry.name.slice(0,65),api:entry.api,managed:true};
+    for(const entry of remote)API_SITES[entry.id]={name:entry.name.slice(0,65),api:entry.api,managed:true,searchable:entry.searchable!==false};
   }
   function loadCache(){
     try{

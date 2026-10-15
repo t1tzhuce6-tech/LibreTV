@@ -42,9 +42,10 @@ function isAdultSourceId(apiId) {
     if (!apiId) return false;
     if (apiId.startsWith('custom_')) {
         const customApi = getCustomApiInfo(apiId.replace('custom_', ''));
-        return Boolean(customApi?.isAdult);
+        return !customApi || Boolean(customApi.isAdult || window.LibreContentPolicy?.isAdultSource(customApi));
     }
-    return Boolean(API_SITES[apiId]?.adult || window.LibreContentPolicy?.isAdultSource(API_SITES[apiId]));
+    const source = API_SITES[apiId];
+    return !source || Boolean(source.adult || window.LibreContentPolicy?.isAdultSource(source));
 }
 
 function getSearchableApiIds(apiIds = selectedAPIs) {
@@ -338,8 +339,9 @@ function checkAdultAPIsSelected() {
         existingTooltip.remove();
     }
 
-    yellowFilterToggle.disabled = false;
-    yellowFilterContainer.classList.remove('filter-disabled');
+    yellowFilterToggle.checked = true;
+    yellowFilterToggle.disabled = true;
+    yellowFilterContainer.classList.add('filter-disabled');
 
     if (hasAdultSelected && yellowFilterToggle.checked) {
         if (filterDescription) {
@@ -686,7 +688,8 @@ function setupEventListeners() {
     const yellowFilterToggle = document.getElementById('yellowFilterToggle');
     if (yellowFilterToggle) {
         yellowFilterToggle.addEventListener('change', function (e) {
-            localStorage.setItem('yellowFilterEnabled', e.target.checked);
+            e.target.checked = true;
+            localStorage.setItem('yellowFilterEnabled', 'true');
 
             // 控制黄色内容接口的显示状态
             const adultdiv = document.getElementById('adultdiv');

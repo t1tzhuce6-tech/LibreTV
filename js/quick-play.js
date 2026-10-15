@@ -58,6 +58,7 @@
         const url = new URL('player.html', location.origin);
         url.searchParams.set('quick', '1');
         for (const key of ['title', 'year', 'kind', 'id', 'source']) if (request[key]) url.searchParams.set(key, request[key]);
+        url.searchParams.set('scope', request.scope || 'safe-all');
         url.searchParams.set('returnUrl', location.href);
         localStorage.setItem('lastPageUrl', location.href);
         location.assign(url);
@@ -82,15 +83,21 @@
             const response = await fetch(url, { signal: controller.signal });
             if (!response.ok) return [];
             const data = await response.json();
-            return (Array.isArray(data.list) ? data.list : []).filter(item => matches(item, request))
+            return (Array.isArray(data.list) ? data.list : [])
+                .filter(item => matches(item, request) && !window.LibreContentPolicy?.isAdultVideo(item))
                 .map(item => ({ ...item, source_code: source }));
         } catch { return []; } finally { clearTimeout(timer); }
     }
     async function discover(session) {
         const selected = read('selectedAPIs', DEFAULT_SELECTED_APIS);
-        const protectedContent = localStorage.getItem('yellowFilterEnabled') === 'true';
-        const sources = [...new Set([session.history?.sourceName, session.request.source, ...selected].filter(Boolean))]
-            .filter(source => !protectedContent || !(API_SITES[source]?.adult || (source.startsWith('custom_') && getCustomApiInfo(source.slice(7))?.isAdult)));
+        const broaden = session.request.scope === 'safe-all';
+        const eligible = window.LibreContentPolicy?.safeSourceIds?.(broaden) || selected;
+        const sources = [...new Set(eligible)].filter(source => {
+            const info = source.startsWith('custom_')
+                ? getCustomApiInfo(source.slice(7)) : API_SITES[source];
+            return !!info && info.searchable !== false && !info.adult && !info.isAdult
+                && !window.LibreContentPolicy?.isAdultSource(info);
+        });
         let next = 0;
         await Promise.all(Array.from({ length: Math.min(4, sources.length) }, async () => {
             while (next < sources.length) {
@@ -138,6 +145,11 @@
     async function select(item, session, resume = session.history) {
         const token = requestToken;
         const detail = await detailFor(item);
+        const videoInfo=detail.videoInfo||{};
+        if (window.LibreContentPolicy?.isAdultVideo({
+            vod_name:videoInfo.title,type_name:videoInfo.type,
+            vod_class:videoInfo.className,vod_remarks:videoInfo.remarks
+        })) throw new Error('该来源的影片分类被内容过滤规则拦截');
         if (token !== requestToken) throw new Error('已改为手动选择');
         let index = resume?.singleMovie && detail.episodes.length === 1 ? 0 : episodeIndex(detail, item, resume);
         if (index < 0 && session.preparing) {
@@ -188,7 +200,7 @@
         const params = new URLSearchParams(location.search);
         if (params.get('quick') !== '1') return true;
         if (state?.preparing) return false;
-        const request = Object.fromEntries(['title', 'year', 'kind', 'id', 'source'].map(key => [key, params.get(key) || '']));
+        const request = Object.fromEntries(['title', 'year', 'kind', 'id', 'source', 'scope'].map(key => [key, params.get(key) || '']));
         const session = { request, items: [], history: findHistory(read('viewingHistory', []), request), preparing: true, manual: false, played: false, retries: 0, tried: new Set() };
         state = session;
         setStatus('正在寻找播放资源…');

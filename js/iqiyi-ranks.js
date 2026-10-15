@@ -49,7 +49,8 @@
       if(item.subtitle)button.append(node('span','lt-rank-subtitle',item.subtitle));
       button.addEventListener('click',()=>{
         if(window.QuickPlay?.open)
-          window.QuickPlay.open({title:item.title,kind:item.kind==='movie'?'movie':'tv'});
+          window.QuickPlay.open({title:item.title,kind:item.kind==='movie'?'movie':'tv',
+            year:String(item.details||'').match(/(?:19|20)\d{2}/)?.[0]||'',scope:'safe-all'});
         else message('当前播放器尚未加载，请刷新页面。');
       });
       frag.append(button);
