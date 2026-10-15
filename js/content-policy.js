@@ -7,7 +7,9 @@
   const knownAdultHosts=new Set([
     'www.ckzy1.com','ckzy.me','jkunzyapi.com','api.bwzyz.com','155api.com',
     'hsckzy.vip','yutuzy10.com','siwazyw.tv','xingba222.com','jipinvip.com',
-    'thzy1.me','api.11bat.com','apilsbzy1.com'
+    'thzy1.me','api.11bat.com','apilsbzy1.com',
+    'heiliaozyapi.com','www.heiliaozyapi.com','api.ddapi.cc','api.heiapi.cc',
+    'www.jingpinx.com','jingpinx.com','naixxzy.com','apilj.com','shayuapi.com','fqzy.me'
   ]);
   const knownAdultAliases=/(?:ckzy|jkun|^155\s*(?:\||资源))/i;
   function isAdultSource(info){

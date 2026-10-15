@@ -1,4 +1,4 @@
-const APP_VERSION = '20261015-resolution-v4';
+const APP_VERSION = '20261015-adult-clean-v5';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
