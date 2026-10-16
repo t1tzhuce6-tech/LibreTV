@@ -28,11 +28,65 @@
     node.append(make('strong','',message),make('p','','这里仅展示 DR 服务提供的数据。'));
     el('dr-grid').replaceChildren(node);
   }
+  let detailRequest=null;
+  async function resolveEpisode(source,flag,playId,title){
+    const statusEl=el('dr-play-status');
+    statusEl.textContent='正在调用 DR 解析当前选集……';
+    statusEl.classList.remove('is-error');
+    try{
+      const data=await get({op:'play',source,play:playId,flag});
+      if(data.status!=='ready'||!data.url)throw new Error(data.reason||'该线路暂时无法直接播放');
+      const url=new URL('player.html',location.origin);
+      url.searchParams.set('dr','1');url.searchParams.set('source','DR影视');
+      url.searchParams.set('url',data.url);
+      url.searchParams.set('title',title);
+      url.searchParams.set('returnUrl',location.href);
+      location.assign(url.href);
+    }catch(e){
+      statusEl.textContent=e.message||'DR 播放解析失败';
+      statusEl.classList.add('is-error');
+    }
+  }
+  async function openDetail(item){
+    if(!item.id)return;
+    detailRequest?.abort();
+    const controller=new AbortController();detailRequest=controller;
+    const dialog=el('dr-detail'),content=el('dr-detail-content');
+    text('dr-detail-title',item.title);
+    content.replaceChildren(make('p','', '正在从 DR 读取详情与剧集……'));
+    text('dr-play-status','请选择一集播放。');
+    el('dr-play-status').classList.remove('is-error');
+    if(!dialog.open)dialog.showModal();
+    const selectedSource=state.source;
+    try{
+      const data=await get({op:'detail',source:selectedSource,id:item.id},controller.signal);
+      if(detailRequest!==controller||!dialog.open)return;
+      content.replaceChildren();
+      if(data.description)content.append(make('p','',data.description));
+      for(const line of data.lines||[]){
+        const group=make('section','dr-line'),heading=make('h3','',line.name);
+        const episodes=make('div','dr-episodes');
+        for(const episode of line.episodes){
+          const btn=make('button','dr-episode',episode.name);
+          btn.type='button';
+          btn.addEventListener('click',()=>resolveEpisode(selectedSource,line.flag,episode.id,item.title));
+          episodes.append(btn);
+        }
+        group.append(heading,episodes);content.append(group);
+      }
+      if(!data.lines?.length)content.append(make('p','','DR 没有提供可选择的播放线路。'));
+    }catch(e){
+      if(controller.signal.aborted)return;
+      content.replaceChildren(make('p','',e.message||'DR 影片详情暂时不可用'));
+    }
+  }
+
   function renderCards(items,append=false){
     const grid=el('dr-grid');
     if(!append)grid.replaceChildren();
     for(const item of items){
-      const card=make('article','dr-film');
+      const card=make('button','dr-film dr-film-button');
+      card.type='button';card.addEventListener('click',()=>openDetail(item));
       const cover=make('div','dr-film-cover');
       if(item.poster){
         const img=make('img');img.src=item.poster;img.alt='';img.loading='lazy';
@@ -120,7 +174,9 @@
       select.disabled=false;
       state.source=state.sources.some(s=>s.key===selection)?selection:state.sources[0].key;
       select.value=state.source;
-      await load('home');
+      const initialQuery=new URLSearchParams(location.search).get('q')?.trim().slice(0,85);
+      if(initialQuery){el('dr-search-input').value=initialQuery;await load('search',{query:initialQuery});}
+      else await load('home');
     }catch(e){
       if(controller.signal.aborted)return;
       select.replaceChildren(new Option('DR 服务未连接',''));
@@ -130,9 +186,13 @@
   }
   function init(){
     el('dr-source').addEventListener('change',ev=>{
-      state.source=ev.target.value;state.categories=[];load('home');
+      const query=state.mode==='search'?state.query:'';
+      state.source=ev.target.value;state.categories=[];
+      if(query)load('search',{query});else load('home');
     });
     el('dr-reload').addEventListener('click',refresh);
+    el('dr-detail-close').addEventListener('click',()=>el('dr-detail').close());
+    el('dr-detail').addEventListener('close',()=>detailRequest?.abort());
     el('dr-home').addEventListener('click',()=>load('home'));
     el('dr-search-form').addEventListener('submit',ev=>{
       ev.preventDefault();const query=el('dr-search-input').value.trim();

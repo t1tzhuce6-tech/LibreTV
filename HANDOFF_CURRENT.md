@@ -134,3 +134,7 @@ PR #21 保持 Draft，正式生产未更新，未请求合并。
 用户明确纠正：DR 绝不是在 LibreTV 里 iframe 嵌入 DrPlayer 或跳转到 DR 网站；LibreTV 第二页使用本系统原生页面与播放能力，DR 仅负责数据、推荐、分类、搜索、影片详情、播放解析。DR 页**不要爱奇艺榜单，也不混主站任何普通源或直播**。允许分阶段实施并每阶段自测。
 开发分支 feat/dr-native-page-20261016 基于已合并 origin/main 87f373a。第一阶段更改 dr.html，新增 css/dr-native.css、js/dr-native.js、functions/dr-data.js，删除旧 js/dr-portal.js、css/dr-portal.css 及前端公开 DR_URL 注入。原主站不变。设置 DR_BACKEND_URL、DR_API_PWD、DR_SOURCE_ALLOWLIST 仅在服务端。明确只有源名单和 T4 同源 API 可请求；成人信息基础过滤。
 第一阶段 npm test 134项全绿。**尚未合并/部署**，避免把只有目录/搜索的页面当成已可播放。第二阶段要实现 DR T4 详情与逐集解析及复用 LibreTV 的播放器、DR 独立换源，第三阶段要连通实际后端验收后才能正式替换线上旧 iframe 版。完整说明 docs/LIBRETV_DR_PORTAL_20261016.md。
+
+## 17. DR 原生页第二阶段代码完成（2026-10-16）
+在 feat/dr-native-page-20261016 继续实现 DR T4 detail/play：从 DR 详情拆出各线路和集数，按 ?play 和 flag 逐集解析；可直接访问的 HTTPS 媒体交给 LibreTV 原 player.html（dr=1）。在 player.js 的 DR 模式，换源不再显示主站源池，而是返回 DR 页按当前片名搜索；相关推荐/主站影片详情在 DR 模式被屏蔽。视频解析若需额外请求头、网页嗅探、DR 代理、HTTP则明确不支持，不能谎称可播放。
+DR 搜索状态换源仍保留相同搜索词。全项目 138 项模拟/静态测试 PASS；未连接真实 drpyS 后端，未经过真实播放和手机端验证，**该 Draft PR 不可合并至生产**。下一步：实际部署 DR Node 服务，配置环境变量、严格审核源名单，再联调源、视频流和兼容性。详见 docs/LIBRETV_DR_PORTAL_20261016.md。

@@ -1,4 +1,4 @@
-const APP_VERSION = '20261016-dr-native-v7';
+const APP_VERSION = '20261016-dr-native-v8';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

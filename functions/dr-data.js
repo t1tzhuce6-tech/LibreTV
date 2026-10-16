@@ -75,7 +75,7 @@ export async function onRequestGet({request,env}){
   if(!whitelist.size)return reply({error:'DR 尚未设置审核通过的源名单',code:'DR_SOURCES_NOT_APPROVED'},503);
   const params=new URL(request.url).searchParams;
   const op=params.get('op')||'sources';
-  if(!['sources','home','search','category'].includes(op))return reply({error:'Invalid operation'},400);
+  if(!['sources','home','search','category','detail','play'].includes(op))return reply({error:'Invalid operation'},400);
   try{
     const sources=await remoteSources(base,env,whitelist);
     if(op==='sources')return reply({sources:sources.map(({key,name})=>({key,name})),count:sources.length});
@@ -87,6 +87,20 @@ export async function onRequestGet({request,env}){
     if(env?.DR_API_PWD)upstream.searchParams.set('pwd',String(env.DR_API_PWD));
     let page=Number(params.get('page')||1);
     if(!Number.isInteger(page)||page<1||page>40)return reply({error:'Invalid page'},400);
+    if(op==='detail'){
+      const id=limit(params.get('id')||'',240);
+      if(!id)return reply({error:'Missing video ID'},400);
+      upstream.searchParams.set('ac','detail');upstream.searchParams.set('ids',id);
+      const detail=normalizeDetail(await loadJson(upstream));
+      return detail?reply({source:{key:source.key,name:source.name},...detail}):reply({error:'内容不在允许范围或不可用'},404);
+    }
+    if(op==='play'){
+      const id=limit(params.get('play')||'',1400);
+      if(!id)return reply({error:'Missing play ID'},400);
+      const flag=limit(params.get('flag')||'',100);
+      upstream.searchParams.set('play',id);if(flag)upstream.searchParams.set('flag',flag);
+      return reply(normalizePlayable(await loadJson(upstream),base,String(env?.DR_API_PWD||'')));
+    }
     if(op==='search'){
       const wd=limit(params.get('q')||'',85);
       if(wd.length<1)return reply({error:'Missing search query'},400);
@@ -102,3 +116,35 @@ export async function onRequestGet({request,env}){
     return reply({error:'DR 服务暂时无法返回数据',code:'DR_UPSTREAM_ERROR'},502);
   }
 }
+
+function normalizeDetail(payload){
+  const row=Array.isArray(payload)?payload[0]:Array.isArray(payload?.list)?payload.list[0]:payload;
+  const info=cleanVideo(row);
+  if(!info)return null;
+  const flags=String(row?.vod_play_from||'').split('$$$').map(s=>limit(s,100));
+  const groups=String(row?.vod_play_url||'').split('$$$');
+  const lines=groups.slice(0,18).map((group,index)=>{
+    const episodes=group.split('#').slice(0,320).map((part,n)=>{
+      const at=part.indexOf('$');
+      return at>=0?{name:limit(part.slice(0,at),80)||String(n+1),id:limit(part.slice(at+1),1400)}:
+        {name:String(n+1),id:limit(part,1400)};
+    }).filter(ep=>ep.id);
+    return {flag:flags[index]||'',name:flags[index]||('线路'+(index+1)),episodes};
+  }).filter(line=>line.episodes.length);
+  return {info,lines,description:limit(row?.vod_content,500)};
+}
+function normalizePlayable(payload,base,secret){
+  let raw=payload?.url;
+  if(Array.isArray(raw))raw=raw[0];
+  if(typeof raw!=='string')return {status:'unsupported',reason:'DR 暂未返回直接视频地址'};
+  if(Number(payload?.parse||0)!==0)return {status:'unsupported',reason:'该线路需要额外解析，当前不支持'};
+  if(payload?.headers&&Object.keys(payload.headers).length)return {status:'unsupported',reason:'该线路需要专用请求头与媒体代理'};
+  let url;try{url=new URL(raw);}catch{return {status:'unsupported',reason:'播放地址格式不正确'};}
+  if(url.protocol!=='https:')return {status:'unsupported',reason:'该线路未提供 HTTPS 视频地址'};
+  if(url.username||url.password||url.origin===base.origin||(secret&&raw.includes(secret)))
+    return {status:'unsupported',reason:'该线路需要 DR 专用媒体代理'};
+  if(!/\.(?:m3u8|mp4|webm|m4v|mov|ts)(?:$|[?#])/i.test(url.pathname+url.search))
+    return {status:'unsupported',reason:'该线路返回的不是可识别的直接视频地址'};
+  return {status:'ready',url:url.href,kind:/\.m3u8(?:$|[?#])/i.test(url.pathname+url.search)?'hls':'video'};
+}
+export {normalizeDetail,normalizePlayable};

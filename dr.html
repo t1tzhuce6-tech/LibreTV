@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#0f1622">
 <title>LibreTV · DR 影视</title>
 <link rel="icon" href="image/logo.png"><link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/dr-native.css?v=20261016a">
+<link rel="stylesheet" href="css/dr-native.css?v=20261016b">
 </head>
 <body>
 <main class="dr-shell">
@@ -37,8 +37,14 @@
 <div class="dr-grid" id="dr-grid" aria-live="polite"></div>
 <div class="dr-bottom"><button type="button" id="dr-more" class="dr-button" hidden>加载下一页</button></div>
 </section>
+<dialog id="dr-detail" class="dr-detail" aria-labelledby="dr-detail-title">
+<header class="dr-detail-head"><div><span class="dr-eyebrow">DR 影片详情与选集</span><h2 id="dr-detail-title">正在加载</h2></div>
+<button type="button" id="dr-detail-close" class="dr-button">关闭</button></header>
+<div id="dr-detail-content"></div>
+<p id="dr-play-status" class="dr-status" role="status" aria-live="polite">点击要看的集数开始解析。</p>
+</dialog>
 <footer>DR 页面由 LibreTV 原生呈现，DR 数据、搜索与推荐均不进入主站。<a href="./">返回原 LibreTV</a></footer>
 </main>
-<script src="js/dr-native.js?v=20261016a" defer></script>
+<script src="js/dr-native.js?v=20261016b" defer></script>
 <script src="js/pwa-register.js" defer></script>
 </body></html>
