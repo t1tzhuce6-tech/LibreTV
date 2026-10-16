@@ -1,4 +1,4 @@
-const APP_VERSION = '20261015-adult-clean-v5';
+const APP_VERSION = '20261016-dr-portal-v6';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -9,6 +9,10 @@ const APP_SHELL_ASSETS = [
   '/cast.html',
   '/watch.html',
   '/about.html',
+  '/dr.html',
+  '/css/dr-portal.css',
+  '/css/dr-navigation.css',
+  '/js/dr-portal.js',
   '/diagnostics.html',
   OFFLINE_URL,
   '/manifest.json',
