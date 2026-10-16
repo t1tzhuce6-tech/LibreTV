@@ -79,6 +79,18 @@ const CUSTOMER_SITES = {
         api: 'https://hhzyapi.com/api.php/provide/vod',
         name: '豪华资源',
     },
+    niuniu: {
+        api: 'https://api.niuniuzy.me/api.php/provide/vod/',
+        name: '牛牛资源',
+    },
+    subozy: {
+        api: 'https://subocj.com/api.php/provide/vod/',
+        name: '速播资源',
+    },
+    haohuav2: {
+        api: 'https://haohuazy.com/api.php/provide/vod/',
+        name: '豪华资源站（备用接口）',
+    },
     p2100: {
         api: 'https://p2100.net/api.php/provide/vod',
         name: '飘零资源',
