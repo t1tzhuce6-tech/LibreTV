@@ -20,6 +20,16 @@ export async function onRequest(context) {
     html = html.replace('window.__ENV__.PASSWORD = "{{PASSWORD}}";', 
       `window.__ENV__.PASSWORD = "${passwordHash}";`);
     
+    // Optional public DR origin. Credentials and arbitrary redirect URLs are never injected.
+    let drPublicUrl = '';
+    try {
+      const candidate = new URL(String(env.DR_PUBLIC_URL || '').trim());
+      if (candidate.protocol === 'https:' && !candidate.username && !candidate.password && !candidate.search && !candidate.hash &&
+          ['/', '/apps/drplayer', '/apps/drplayer/'].includes(candidate.pathname)) drPublicUrl = candidate.origin;
+    } catch {}
+    html = html.replace('window.__DR_DEFAULT_URL__ = "{{DR_PUBLIC_URL}}";',
+      'window.__DR_DEFAULT_URL__ = ' + JSON.stringify(drPublicUrl) + ';');
+
     return new Response(html, {
       headers: response.headers,
       status: response.status,
