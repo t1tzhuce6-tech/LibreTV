@@ -1,4 +1,4 @@
-const APP_VERSION = '20261016-dr-portal-v6';
+const APP_VERSION = '20261016-dualviews-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -22,6 +22,7 @@ const APP_SHELL_ASSETS = [
   '/css/watch.css',
   '/css/theme.css',
   '/css/browse-live.css',
+  '/css/dual-discovery.css',
   '/css/profile-schemes.css',
   '/css/hot-list.css',
   '/css/iqiyi-ranks.css',
@@ -31,6 +32,8 @@ const APP_SHELL_ASSETS = [
   '/js/proxy-auth.js',
   '/js/source-speed.js',
   '/js/quick-play.js',
+  '/js/rank-source-prefs.js',
+  '/js/discovery-views.js',
   '/js/experience.js',
   '/js/player-recommendations.js',
   '/js/mobile-fullscreen.js',

@@ -36,7 +36,7 @@ test('new DR page is separate, linked from main site and not merged into existin
   assert.match(page,/不会假装有可播放片源/);
   assert.match(sw,/'\/dr\.html'/);
   assert.match(sw,/'\/js\/dr-portal\.js'/);
-  assert.match(sw,/20261016-dr-portal-v6/);
+  assert.match(sw,/20261016-dualviews-v1/);
 });
 test('DR url canonicalization allows only server root and DrPlayer path',()=>{
   const {DrPortal}=load();

@@ -13,7 +13,7 @@ test('independent ranking adapters use the same safe playback entry',()=>{
   const bridge=window.LibreRankBridge;
   bridge.register('official',item=>({title:item.title,year:item.info,kind:item.kind}));
   assert.equal(bridge.open('official',{title:' 影片 ',info:'2026',kind:'movie'}),true);
-  assert.deepEqual({...opened[0]},{title:'影片',year:'2026',kind:'movie',scope:'safe-all'});
+  assert.deepEqual({...opened[0]},{title:'影片',year:'2026',kind:'movie',scope:'rank-selected'});
   assert.equal(bridge.open('unknown',{title:'影片'}),false);
   assert.equal(bridge.open('official',{title:''}),false);
   assert.throws(()=>bridge.register('official',()=>({title:'重复'})));
@@ -23,7 +23,7 @@ test('ranking bridge does not invent movie/tv metadata for unknown genres',()=>{
   vm.runInNewContext(bridgeCode,{window});
   window.LibreRankBridge.register('other',item=>item);
   window.LibreRankBridge.open('other',{title:'综艺节目',year:'未知',kind:'variety'});
-  assert.deepEqual({...opened[0]},{title:'综艺节目',year:'',kind:'',scope:'safe-all'});
+  assert.deepEqual({...opened[0]},{title:'综艺节目',year:'',kind:'',scope:'rank-selected'});
 });
 test('source lookup checks at most three pages, skips adult results and finds page two',async()=>{
   const requests=[],window={

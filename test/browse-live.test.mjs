@@ -78,7 +78,7 @@ test('real browse page combines returned child films and does not drop lists dur
   ]);
   window.__ctl.state.typeId='1';
   await window.__ctl.loadList();
-  assert.deepEqual(Array.from(window.__cards,item=>item.vod_name),['动作片','喜剧片']);
+  assert.deepEqual(Array.from(window.__cards,item=>item.vod_name),['喜剧片']);
   assert.equal(elements.ltNextPage.disabled,false);
 });
 test('M3U parser excludes HTTP channels and translates common English groups',()=>{

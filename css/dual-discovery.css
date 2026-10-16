@@ -1,0 +1,24 @@
+/* Site-level two-view navigation, without duplicating the existing player. */
+.lt-discovery-nav{width:100%;max-width:1280px;margin:12px auto 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lt-discovery-link{display:flex;flex-direction:column;gap:3px;min-width:0;padding:16px 18px;border:1px solid #40516c;border-radius:13px;background:#162338;color:#e2e8f0;text-decoration:none}
+.lt-discovery-link strong{font-weight:750;font-size:17px}
+.lt-discovery-link small{font-size:12px;color:#9ca3af}
+.lt-discovery-link.is-current{background:#28405e;border-color:#38bdf8;box-shadow:inset 0 0 0 1px #38bdf8}
+body.lt-view-sources #ltHotList,body.lt-view-sources #doubanArea{display:none!important}
+body.lt-view-ranks #ltExplore{display:none!important}
+.lt-explore-cats{flex-wrap:wrap;max-height:170px;overflow:auto;align-items:center}
+.lt-explore-subcats{display:flex;flex-direction:column;gap:9px;margin-bottom:10px}
+.lt-explore-subcats .lt-explore-cats{max-height:none}
+.lt-explore-level{border-left:2px solid #334155;padding-left:10px}
+.lt-explore-level small{display:block;color:#94a3b8;margin:0 0 5px;font-size:12px}
+.lt-rank-sources{border:1px solid #354a63;border-radius:12px;background:#101e30;margin:-2px 0 18px;padding:12px}
+.lt-rank-sources-summary{cursor:pointer;font-size:14px;font-weight:650;list-style:revert}
+.lt-rank-sources-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 10px}
+.lt-rank-sources-toolbar button,.lt-rank-source-row button{background:#223854;border:1px solid #52637b;border-radius:7px;padding:6px 11px;color:#e2e8f0;cursor:pointer}
+.lt-rank-source-row button:disabled{opacity:.3;cursor:default}
+.lt-rank-sources-list{max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.lt-rank-source-row{display:flex;gap:5px;align-items:center;padding:5px 6px;border-radius:6px;background:#18283d}
+.lt-rank-source-row label{flex:1;min-width:0;display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
+.lt-rank-source-row input{accent-color:#38bdf8;width:15px;height:15px}
+.lt-rank-sources-hint{font-size:12px;color:#9ca3af;margin:10px 0 2px}
+@media(max-width:640px){.lt-discovery-nav{padding:0 12px}.lt-discovery-link{padding:12px 10px}.lt-discovery-link strong{font-size:15px}.lt-discovery-link small{font-size:11px}.lt-rank-sources{padding:10px}.lt-rank-source-row button{padding:8px 10px}}

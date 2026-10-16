@@ -16,7 +16,7 @@
     if(!title)return false;
     const value=String(raw.year||'').match(/(?:19|20)\d{2}/)?.[0]||'';
     const kind=['movie','tv'].includes(raw.kind)?raw.kind:'';
-    root.QuickPlay.open({title,year:value,kind,scope:'safe-all'});
+    root.QuickPlay.open({title,year:value,kind,scope:'rank-selected'});
     return true;
   }
   root.LibreRankBridge=Object.freeze({
