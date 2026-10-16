@@ -1278,7 +1278,7 @@ async function initializePageContent() {
     updateButtonStates();
 
     // Metadata and recommendations load independently of video startup.
-    void window.PlayerRecommendations?.load();
+    if (urlParams.get('dr') !== '1') void window.PlayerRecommendations?.load();
 
     // 更新排序按钮状态
     updateOrderButton();
@@ -2615,6 +2615,7 @@ function renderQuickMoreActions() {
     }], ['从头播放', button => confirmQuickRestart(button)]]) {
         const button = document.createElement('button');
         button.type = 'button';
+        if (new URLSearchParams(location.search).get('dr') === '1' && label === '影片详情') continue;
         button.textContent = label;
         button.onclick = () => action(button);
         container.appendChild(button);
@@ -2741,6 +2742,13 @@ function formatSpeedDisplay(speedResult) {
 }
 
 async function showSwitchResourceModal() {
+    // The DR-only second page must never expose the main LibreTV source pool.
+    if (new URLSearchParams(location.search).get('dr') === '1') {
+        const destination = new URL('dr.html', location.origin);
+        destination.searchParams.set('q', currentVideoTitle);
+        location.assign(destination.href);
+        return;
+    }
     window.QuickPlay?.stop();
     window.cancelResourceSwitchSpeedChecks();
     const probeController = new AbortController();
