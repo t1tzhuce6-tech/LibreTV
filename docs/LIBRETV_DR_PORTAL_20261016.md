@@ -1,22 +1,29 @@
-# LibreTV + DR 双入口接力（2026-10-16）
-## 决议
-用户保留 LibreTV 为主站，DR 作为单独网页；两套片源、榜单与系统互不影响。
-## 本轮实现
-- index.html 添加 LibreTV / DR 页签；dr.html 是独立 DR 专区。
-- dr.html 输入 DR 服务器的 HTTPS 网址，打开对方自带的 /apps/drplayer/。
-- 允许浏览器本机与内网 HTTP 地址，但 HTTPS 页不嵌入 HTTP，以“新标签页打开”作为退路。
-- 只在本地 localStorage 保存地址，不收集或储存 DR 密码、Cookie、Token。
-- Cloudflare Pages 可通过 DR_PUBLIC_URL 环境变量统一设置公网 HTTPS DR 服务地址；_middleware 注入前验证地址。
-- 不改变现有 LibreTV 的首页功能、搜索、榜单、视频源或直播。
-- Service Worker 版本更新并缓存 DR 页面资源；新增专项自动测试。
-## 未完成及限制
-- 本轮仅交付 DR 网页接入层；没有启动 DR 后端，页面未配置时明确说明这一点。
-- Windows 目前是 Node v24.17.0，而 drpyS 的 package.json 要求 Node >=18 且 <24。
-- Windows 已安装 Docker 客户端，Docker daemon 当前没运行。
-- Cloudflare Pages 不能直接运行常驻的 drpyS Node.js 服务。
-- DR 需要一台持续运行的 Windows/NAS/VPS 或独立托管后端；禁止未经同意开放本机端口至公网。
-- 未进行手机端实际播放验证；远程 DrPlayer 可能禁止 iframe 嵌入，但提供独立打开退路。
-- 不添加未经审查成人源，不声称接口天然授权或一定可播放。
-## 发布和回退
-- 自动化测试全绿后用 PR 发布。
-- 旧生产 SHA：2c51310111007c528f14e7d88a2bcc2b3954dfc5。
+# LibreTV 原生 DR 第二页（2026-10-16）
+
+## 用户明确需求
+- 旧 LibreTV 主页继续使用；第二页仍由 LibreTV 原生页面、搜索、选集和播放器实现。
+- DR 只作为后台源服务，绝不 iframe 嵌入 DrPlayer，也不跳转到 DR 独立网页。
+- 第二页只展示 DR 的源、首页推荐、分类、搜索、影片详情与播放；不要引入爱奇艺榜单或现有普通资源站/直播源。
+- 开发分阶段进行，每阶段独立验收，避免不完整服务进入正式站。
+
+## 第一阶段（当前开发分支）
+- 主页切换按钮继续使用，dr.html 彻底替换成 LibreTV 原生 DR 页。
+- js/dr-native.js 从同源 /dr-data 查询源列表、首页推荐、分类、搜索和分页，使用 DOM textContent 渲染数据。
+- functions/dr-data.js 以 drpyS T4 /config/1?sub=green&healthy=1 发现已审查源，再向固定的 /api/:module 读数据。
+- 服务端环境：DR_BACKEND_URL=公网HTTPS服务根地址；DR_API_PWD=该服务访问密码；DR_SOURCE_ALLOWLIST=逗号分隔的已验证源 key，缺省为空时拒绝显示。所有值只配置到服务端。
+- 禁止客户端任意指定上游，拒绝非 HTTPS 后端和跨域的 source.api，不允许未在名单的源调用。
+- 成人源、成人分类、成人影片标题等基础过滤；还需要真实后端及分类复核，不能代替最终审核。
+- 取消原来的 DR_PUBLIC_URL 注入、DrPlayer iframe、旧 js/dr-portal.js 和 css/dr-portal.css。
+- 更换 PWA 缓存版本以防手机沿用旧页面。
+- 当前未配置和启动实际 drpyS，所以暂时无法实机试播；模拟 API 测试不能算真实播放通过。
+
+## 第二阶段（尚未执行）
+- 增加 DR 详情 T4 ?ac=detail&ids=...，解析 vod_play_from / vod_play_url 的线路和集数。
+- 对每集调用 T4 ?play=...&flag=... 解析真实地址，不直接把播放 ID 当 URL。
+- 复用 LibreTV 播放能力，DR 内播放、DR 源独立换源、下一集/历史回退；阻止原普通片源混入 DR。
+- 处理媒体请求头、DR 服务自己的媒体代理、安全鉴权、HTTPS/跨域及不能播放的可解释反馈。
+- 完成真实后端连通、选集、播放与手机浏览器验收后，再合并 PR 并部署正式站。
+
+## 运行环境
+- 本机 Node v24，不满足 drpyS <24 限定；本轮不安装 DR 服务或对公网暴露端口。
+- 当前 Cloudflare Pages 生产仍是历史 iframe 版本，需要后续功能完成后替换。

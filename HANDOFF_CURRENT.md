@@ -129,3 +129,8 @@ PR #21 保持 Draft，正式生产未更新，未请求合并。
 用户明确决定暂不替换 LibreTV，以 LibreTV 为主站，DR 另开独立页面，先接网页入口、后续再部署/连通 DR 服务。说明见 docs/LIBRETV_DR_PORTAL_20261016.md。
 开发分支 feat/drpy-dual-portal-20261016 从 origin/main 2c513101 创建。新增 dr.html、js/dr-portal.js、css/dr-portal.css、css/dr-navigation.css；主页增加切换页签。DR 地址可按浏览器独立设置或将来从 DR_PUBLIC_URL 环境变量统一提供（仅安全 HTTPS 公网来源）。现有资源与安全过滤不受影响。
 **不要混淆完成状态：DR 网页接入入口可部署，但 drpyS Node 后端尚未安装/启动/公网连通。** 当前 Windows Node v24 超出 drpyS 的 <24 要求，Docker daemon 未运行。未授权之前不能把本机端口暴露到公网。需进一步确定 DR 后端常驻位置及身份认证。
+
+## 16. 纠正 DR 集成方向（2026-10-16，覆盖第15条原嵌入设计）
+用户明确纠正：DR 绝不是在 LibreTV 里 iframe 嵌入 DrPlayer 或跳转到 DR 网站；LibreTV 第二页使用本系统原生页面与播放能力，DR 仅负责数据、推荐、分类、搜索、影片详情、播放解析。DR 页**不要爱奇艺榜单，也不混主站任何普通源或直播**。允许分阶段实施并每阶段自测。
+开发分支 feat/dr-native-page-20261016 基于已合并 origin/main 87f373a。第一阶段更改 dr.html，新增 css/dr-native.css、js/dr-native.js、functions/dr-data.js，删除旧 js/dr-portal.js、css/dr-portal.css 及前端公开 DR_URL 注入。原主站不变。设置 DR_BACKEND_URL、DR_API_PWD、DR_SOURCE_ALLOWLIST 仅在服务端。明确只有源名单和 T4 同源 API 可请求；成人信息基础过滤。
+第一阶段 npm test 134项全绿。**尚未合并/部署**，避免把只有目录/搜索的页面当成已可播放。第二阶段要实现 DR T4 详情与逐集解析及复用 LibreTV 的播放器、DR 独立换源，第三阶段要连通实际后端验收后才能正式替换线上旧 iframe 版。完整说明 docs/LIBRETV_DR_PORTAL_20261016.md。

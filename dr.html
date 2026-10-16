@@ -3,52 +3,42 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f1622">
-<title>DR 独立专区 · LibreTV</title>
+<title>LibreTV · DR 影视</title>
 <link rel="icon" href="image/logo.png"><link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/dr-portal.css?v=20261016a">
+<link rel="stylesheet" href="css/dr-native.css?v=20261016a">
 </head>
 <body>
 <main class="dr-shell">
 <nav class="dr-tabs" aria-label="影视系统切换">
-<a class="dr-tab" href="./">◀ LibreTV 主站</a>
-<a class="dr-tab is-active" href="dr.html" aria-current="page">DR 独立专区</a>
+<a href="./">LibreTV 主站</a><a href="dr.html" aria-current="page">LibreTV · DR专区</a>
 </nav>
 <header class="dr-header">
-<span class="dr-eyebrow">第二套影视系统 · 独立运行</span>
-<h1><span>DR</span> 影视专区</h1>
-<p>LibreTV 继续负责现有影片、榜单、换源和直播；DR 使用单独的 drpyS / DrPlayer 服务，不会替换或混入主站片源。</p>
+<span class="dr-eyebrow">LIBRETV · 第二页</span>
+<h1>DR 影视</h1>
+<p>由 LibreTV 显示和操作，影视数据仅来自独立 drpyS 服务。原主站的榜单、直播和普通影视源不会在这一页混入。</p>
 </header>
-<section class="dr-panel" aria-labelledby="dr-connect-title">
-<div class="dr-panel-heading"><div><h2 id="dr-connect-title">连接 DR 服务</h2><p>需要一台已经运行 drpyS、可从当前设备访问的服务主机。</p></div>
-<span class="dr-state" id="dr-state" role="status" aria-live="polite">未配置</span></div>
-<form id="dr-form" autocomplete="off">
-<label for="dr-url">drpyS 服务网址</label>
-<div class="dr-input-row">
-<input id="dr-url" type="url" inputmode="url" spellcheck="false" placeholder="https://dr.example.com" aria-describedby="dr-help" required>
-<button type="submit" class="dr-primary">保存并打开</button></div>
-<p id="dr-help" class="dr-hint">输入服务首页地址即可，系统会打开 /apps/drplayer/。也支持填写完整的 DrPlayer 页面网址。不要在网址中包含密码、Token 或 Cookie。</p>
-<p id="dr-error" class="dr-error" role="alert" hidden></p>
+<section class="dr-toolbar" aria-labelledby="source-title">
+<div class="dr-source-row">
+<div class="dr-source-select"><label for="dr-source" id="source-title">DR 影视源</label>
+<select id="dr-source" disabled><option value="">等待 DR 服务连接</option></select></div>
+<button id="dr-reload" type="button" class="dr-button">重新获取 DR 源</button>
+</div>
+<form id="dr-search-form" class="dr-search" role="search">
+<label for="dr-search-input">在当前 DR 源中找片</label>
+<div class="dr-search-row"><input id="dr-search-input" placeholder="输入电影、电视剧名称" maxlength="85" autocomplete="off" required>
+<button type="submit" class="dr-button dr-primary">搜索</button></div>
 </form>
-<div class="dr-actions">
-<button type="button" id="dr-open" class="dr-secondary" disabled>在新标签页打开 DR</button>
-<button type="button" id="dr-reload" class="dr-secondary" disabled>重新加载</button>
-<button type="button" id="dr-clear" class="dr-subtle">清除本机地址</button>
-</div>
-<p class="dr-note">地址仅保存于当前浏览器。外部 DR 服务需要自行启用认证与 HTTPS。若禁止网页嵌入，可以在新标签页打开。</p>
+<p class="dr-status" role="status" aria-live="polite" id="dr-status">正在检查 DR 后端配置……</p>
 </section>
-<section class="dr-screen" aria-label="DR 网页播放器">
-<div class="dr-screen-top"><h2>DrPlayer</h2><span id="dr-indicator">等待连接</span></div>
-<div id="dr-empty" class="dr-empty">
-<div class="dr-empty-mark" aria-hidden="true">DR</div>
-<h3>还没有连接到 DR</h3>
-<p>先在上方填写 drpyS 服务地址。这里将显示 DR 自带的 DrPlayer，而不是另做一套播放器。</p>
-<p class="dr-requirement">DR 后端未部署时，不会假装有可播放片源。Cloudflare Pages 不能直接运行 drpyS 的 Node.js 服务。</p>
-</div>
-<iframe id="dr-frame" title="DrPlayer 独立播放器" referrerpolicy="no-referrer" allow="fullscreen; autoplay; picture-in-picture" loading="lazy" hidden></iframe>
+<section class="dr-content" aria-label="DR 影视内容">
+<div class="dr-heading"><div><span class="dr-eyebrow" id="dr-mode-label">当前 DR 源</span><h2 id="dr-heading">DR 首页推荐</h2></div>
+<button type="button" id="dr-home" class="dr-button" disabled>返回 DR 推荐</button></div>
+<div class="dr-categories" id="dr-categories" aria-label="DR 分类"></div>
+<div class="dr-grid" id="dr-grid" aria-live="polite"></div>
+<div class="dr-bottom"><button type="button" id="dr-more" class="dr-button" hidden>加载下一页</button></div>
 </section>
-<footer>LibreTV 与 DR 独立运行。<a href="./">返回 LibreTV</a> · <a href="https://github.com/woshishiq1/drpys" target="_blank" rel="noopener noreferrer">drpyS 项目说明</a></footer>
+<footer>DR 页面由 LibreTV 原生呈现，DR 数据、搜索与推荐均不进入主站。<a href="./">返回原 LibreTV</a></footer>
 </main>
-<script>window.__DR_DEFAULT_URL__ = "{{DR_PUBLIC_URL}}";</script>
-<script src="js/dr-portal.js?v=20261016a" defer></script>
+<script src="js/dr-native.js?v=20261016a" defer></script>
 <script src="js/pwa-register.js" defer></script>
 </body></html>
