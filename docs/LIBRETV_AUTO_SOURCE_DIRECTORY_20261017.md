@@ -1,22 +1,26 @@
-# LibreTV 自动资源站目录接入验收 · 2026-10-17
+# LibreTV 动态资源站完整目录接入 · 2026-10-17
 
-## 用户目标
-动态接入 www.ziyuanzu.com/top 资源站到**已有**片源库下拉框；只按规范化 API URL 去重，不按名称去重；用 [自动接入]/[本地源] 标记来源；首页搜索、热榜找片、播放器换源共用同一个安全片源池。保留手动源的勾选排序。
+## 结论与背景
+原版只认 /api.php/provide/vod/ 并用 6.5 秒单次测试删除其他来源，导致 77 条登记记录只取 21 条。现在改成读取资源站目录官方列表 JSON：
+https://www.ziyuanzu.com/api/v1/sources?limit=100
+保留目录原始 URL，不按源名合并。
 
-## 架构
-- scripts/sync-source-directory.mjs：从 /top/__data.json 解析 onlineSources，保存 3 组 TOP10 指标和各站 CMS URL；过滤成人专用源、重复链接、无效/HTTP地址，实际 GET ?ac=list 确认 CMS JSON 结构；最多 7 并发，每源 6.5 秒。
-- data/auto-source-directory.json 为可审计快照；js/auto-source-feed.js 为无需 CORS 的同步加载脚本。登录/打开网站时不会直接请求 ziyuanzu。
-- js/auto-source-registry.js：在 app 初始化前、播放器之前加载；对已有 API_SITES 及 customAPIs 按完整 URL 去重。既有/自定义来源优先；同名但不同 URL 保留。不可执行第三方 JS，只接收安全文本和有效 API。
-- js/content-policy.js：安全片源池兼容自动/原有/手动，保留成人内容来源过滤；相同完整链接只返回一个源 ID。
-- js/browse-live.js：下拉框标记来源并列出 34 个合格去重源，原站 CMS 分类继续动态展示；自定义源也可进入选择列表。
-- js/rank-source-prefs.js：热榜管理列表显示来源标签，新来源自动出现，已保存的勾选和排序沿用。播放器仍通过 rank-selected 来源筛选。
-- js/app.js：首页搜索使用相同全部合格来源，限制最大 5 并发，以减少 Cloudflare Workers 瞬时负担。
-- 自动同步流程：.github/workflows/auto-source-directory.yml 每天 01:25 UTC 尝试生成新快照，**生成更新 PR、禁止直接推送 main**。只有合并且通过 CI 才更新正式页面；该工作流只有落入默认分支后才会定时生效。
+## 数据快照
+- 官方发布 77 条 API，全部 apiType=json；其中 status=ok 57、status=down 20。
+- 安全/成人专用过滤 17 条，安全候选记录保留 60 条；其中 ready=39、review=21（包含 HTTP 混合内容、目录待恢复）。
+- 六类发布路径均保留：/api.php/provide/vod[/]、/provide/vod/、/inc/api.php、/api.php、/api/json.php。
+- 已有、本地手动和自动目录按规范化完整链接去重。实际浏览器片源库总计 69 条，热榜可搜索候选 49 条，待验证 20 条。
+- 注册标签：本地源、自动接入、自动接入·待验证。待验证保留在下拉框，不自动参与搜索/热榜；网站恢复后下次同步可升为 ready。用户手动打开待验证源仅是自愿尝试，不保证 HTTPS 混合内容或受限接口能播放。
+- 接口验证仅证明来源可登记或其状态来自资源站目录，并非视频播放验收。不进行未经授权的访问绕过。用户已要求屏蔽成人专用来源。
 
-## 测试与事实边界
-- 2026-10-17 上午真实访问 /top/__data.json：onlineSources 70 条。经 URL、成人专用源和 CMS 类别有效性过滤，21 条进入当前快照。
-- 本地去重后，片源库实际列表 34 条（其中既有片源22条，动态快照导入12条；另外9条动态站点 API 与既有源重复不再显示）。
-- Node 测试 124/124 PASS，专门验证同名不同 URL 仍保留、不同名相同 URL 合并、自定义/现有优先、自动标签、索引注入顺序。
-- 静音 Chrome 本地浏览器：两个页面切换、片源库 34 项、热榜片源管理 34 项、勾选/反选、三级 CMS 分类、页面排序均验证，浏览器 JS 错误 0。未播放任何视频。
-- API 列表 HTTP200 与分类 JSON 合格不代表有可用影视内容、合法授权或流媒体实播成功；未宣称全部高清资源可播放。
-- 本次分支为 feat/native-dualviews-source-prefs-20261016，原 DR 分支及正式网站未改变。后续需 Preview 验收，才允许合并至 main。
+## 实现与测试
+- scripts/sync-source-directory.mjs：只抓取官方 JSON 列表一次，不由 Cloudflare Worker 每次访问外部网站；静态保存 data/auto-source-directory.json 和 js/auto-source-feed.js。使用 atomic-ish 临时文件再 rename。
+- js/auto-source-registry.js：同步导入，保留安全站点目录与可搜索集合分离；按完整 API URL 去重。
+- js/browse-live.js：片源库下拉读取 catalogIds，既能浏览 ready 也能看到 review。
+- js/content-policy.js：safeSourceIds 拦截成人专用、searchable=false，并去重；全站搜索最多 5 个并发，热榜按用户已保存的选择与排序。
+- .github/workflows/auto-source-directory.yml：定时创建复审 PR，不直接推送 main。只有项目负责人合并更新 PR 才会进入线上环境。
+- 2026-10-17 实测 Node 126/126 PASS；静音 Chrome 本地显示片源库 69、热榜选源 49；全选、反选、保存、两页切换、CMS 三级目录按原有 type_id 查询通过，浏览器 JS 异常为空。
+- 本轮使用 feat/native-dualviews-source-prefs-20261016 的工作树，不动正式站点、DR Docker 或其代理服务。
+
+## 尚需
+Cloudflare 独立 Preview 真实页面验收和后续 iPhone 实测。在线播放成功率、高清码率及授权未经逐站核实，不能声称所有 49 条可实际播放。

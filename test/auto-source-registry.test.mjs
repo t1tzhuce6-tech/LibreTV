@@ -24,7 +24,7 @@ test('source directory snapshot is a structured, sanitized and link-unique CMS c
  assert.equal(snapshot.schema,1);
  assert.ok(snapshot.entries.length>=8);
  assert.equal(snapshot.entries.length,new Set(snapshot.entries.map(x=>x.api)).size);
- assert.ok(snapshot.entries.every(x=>x.id.startsWith('auto_')&&x.api.startsWith('https://')&&x.name));
+ assert.ok(snapshot.entries.every(x=>x.id.startsWith('auto_')&&/^https?:\/\//.test(x.api)&&x.name));
  assert.ok(!snapshot.entries.some(x=>/155api|jkunzyapi|porn/i.test(x.api)));
 });
 test('registry deduplicates by canonical URL, NOT by name; manual and existing sources have precedence',()=>{

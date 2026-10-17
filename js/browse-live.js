@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  const sourceOrder=()=>window.LibreContentPolicy?.safeSourceIds?.(true) || DEFAULT_SELECTED_APIS;
+  const sourceOrder=()=>window.LibreAutoSourceRegistry?.catalogIds?.() || window.LibreContentPolicy?.safeSourceIds?.(true) || DEFAULT_SELECTED_APIS;
   const liveProviders=[
     {id:'iptvorg',name:'IPTV-org 中文频道',url:'https://iptv-org.github.io/iptv/languages/zho.m3u'},
     {id:'guovin',name:'Guovin 央视／卫视',url:'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u'},
