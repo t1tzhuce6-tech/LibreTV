@@ -47,7 +47,8 @@
       }catch{}
     }
     const registered=includeAvailable?Object.keys(root.API_SITES||{}):[];
-    const candidates=[...selected,...registered,...custom];
+    // Manual URLs take precedence over preinstalled and directory entries on link duplicates.
+    const candidates=includeAvailable?[...custom,...selected,...registered]:selected;
     const used=new Set();
     return [...new Set(candidates)].filter(id=>{
       if(typeof id!=='string')return false;

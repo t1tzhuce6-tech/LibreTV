@@ -23,7 +23,7 @@
     try{root.localStorage?.setItem(KEY,JSON.stringify(value))}catch{}
     root.dispatchEvent?.(new Event('libretv:rank-sources-changed'));
   }
-  const label=id=>id.startsWith('custom_')?root.getCustomApiInfo?.(id.slice(7))?.name||id:root.API_SITES?.[id]?.name||id;
+  const label=id=>root.LibreAutoSourceRegistry?.label?.(id) || (id.startsWith('custom_')?root.getCustomApiInfo?.(id.slice(7))?.name||id:root.API_SITES?.[id]?.name||id);
   function initPanel(){
     const hot=root.document?.getElementById('ltHotList');if(!hot||root.document.getElementById('ltRankSources'))return;
     const panel=root.document.createElement('details');panel.id='ltRankSources';panel.className='lt-rank-sources';

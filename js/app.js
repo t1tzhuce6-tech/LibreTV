@@ -252,7 +252,7 @@ function initAPICheckboxes() {
                    class="form-checkbox h-3 w-3 text-blue-600 bg-[#222] border border-[#333]" 
                    ${checked ? 'checked' : ''} 
                    data-api="${apiKey}">
-            <label for="api_${apiKey}" class="ml-1 text-xs text-emerald-400 truncate">${api.managed ? '🔄 订阅 · ' : '✅ 默认 · '}${api.name}</label>
+            <label for="api_${apiKey}" class="ml-1 text-xs text-emerald-400 truncate">${api.origin === 'auto' ? '🔄 自动接入 · ' : '✎ 本地源 · '}${escapeHtmlAttr(api.name)}</label>
         `;
         normaldiv.appendChild(checkbox);
 
@@ -791,12 +791,13 @@ async function search() {
         return;
     }
 
-    if (selectedAPIs.length === 0) {
+    const unifiedSearchIds=window.LibreContentPolicy?.safeSourceIds?.(true)||getSearchableApiIds(selectedAPIs);
+    if (unifiedSearchIds.length === 0) {
         showToast('请至少选择一个API源', 'warning');
         return;
     }
 
-    const searchableApiIds = getSearchableApiIds(selectedAPIs);
+    const searchableApiIds = getSearchableApiIds(unifiedSearchIds);
     if (searchableApiIds.length === 0) {
         showToast('黄色内容过滤已开启，当前选中的黄色资源站已被跳过', 'warning');
         return;
@@ -832,17 +833,22 @@ async function search() {
         renderSearchResults(query, currentSearchGroups, completed, searchableApiIds.length);
         releaseLoading();
     };
-    await Promise.all(searchableApiIds.map(async apiId => {
-        try {
-            await searchByAPIAndKeyWord(apiId, query, batch => {
-                if (request !== activeSearchRequest || controller.signal.aborted) return;
-                allResults.push(...batch);
+    // Limit concurrent requests: no single search should burst into dozens of Workers invocations.
+    let cursor=0;
+    await Promise.all(Array.from({length:Math.min(5,searchableApiIds.length)},async()=>{
+        while(cursor<searchableApiIds.length&&!controller.signal.aborted&&request===activeSearchRequest){
+            const apiId=searchableApiIds[cursor++];
+            try{
+                await searchByAPIAndKeyWord(apiId,query,batch=>{
+                    if(request!==activeSearchRequest||controller.signal.aborted)return;
+                    allResults.push(...batch);
+                    update();
+                },controller.signal);
+            }finally{
+                if(request!==activeSearchRequest)return;
+                completed++;
                 update();
-            }, controller.signal);
-        } finally {
-            if (request !== activeSearchRequest) return;
-            completed++;
-            update();
+            }
         }
     }));
     if (request === activeSearchRequest) releaseLoading();

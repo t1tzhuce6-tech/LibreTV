@@ -372,7 +372,8 @@ test('maintenance automation avoids direct main pushes and public preview workfl
     workflowFiles.map(fileName => readProjectFile(path.join('.github/workflows', fileName)))
   )).join('\n');
 
-  assert.deepEqual(workflowFiles.sort(), ['ci.yml']);
+  assert.deepEqual(workflowFiles.sort(), ['auto-source-directory.yml', 'ci.yml']);
+  assert.match(workflowText,/create-pull-request@v7/);
   assert.match(readme, /Preview deployments 设置为 `None`/);
   assert.match(readme, /`main` 只作为通过 CI 后的生产部署分支/);
   assert.match(contributing, /Do not push directly to `main`/);
@@ -1230,7 +1231,7 @@ test('release metadata is bumped for this update', async () => {
   assert.equal(lockJson.version, '1.2.28');
   assert.equal(lockJson.packages[''].version, '1.2.28');
   assert.match(config, /version:\s*'1\.2\.28'/);
-  assert.match(serviceWorker, /const APP_VERSION = '20261017-clean-home-v1'/);
+  assert.match(serviceWorker, /const APP_VERSION = '20261017-auto-source-v1'/);
   assert.match(serviceWorker, /'\/js\/player-recommendations\.js'/);
   assert.match(serviceWorker, /'\/js\/mobile-fullscreen\.js'/);
   assert.match(serviceWorker, /'\/css\/theme\.css'/);

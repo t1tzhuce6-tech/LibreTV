@@ -15,7 +15,7 @@
   const $=id=>document.getElementById(id);
   function node(tag,cls,label){const e=document.createElement(tag);if(cls)e.className=cls;if(label!==undefined)e.textContent=label;return e;}
   function setting(key,value){try{if(value===undefined)return localStorage.getItem(key);localStorage.setItem(key,value);}catch(e){return null;}}
-  function validSource(source){return typeof API_SITES!=='undefined'&&!!API_SITES[source];}
+  function validSource(source){return source?.startsWith?.('custom_')?!!getCustomApiInfo(source.slice(7)):typeof API_SITES!=='undefined'&&!!API_SITES[source];}
   function showMsg(message){$('ltBrowseStatus').textContent=message;}
   function appendButton(target,label,callback,selected){
     const b=node('button','lt-explore-btn'+(selected?' is-active':''),label);b.type='button';b.addEventListener('click',callback);target.appendChild(b);return b;
@@ -111,7 +111,7 @@
       const card=node('button','lt-explore-card');card.type='button';
       const img=node('img','lt-explore-cover');img.loading='lazy';img.alt=String(item.vod_name||'影片');
       img.referrerPolicy='no-referrer';
-      const pic=normalizeImageUrl(item.vod_pic||'',API_SITES[sourceId]?.api||'');
+      const pic=normalizeImageUrl(item.vod_pic||'',getApiSearchContext(sourceId)?.apiBaseUrl||'');
       img.src=pic||createImagePlaceholder('暂无封面');
       img.onerror=()=>{img.onerror=null;img.src=createImagePlaceholder('暂无封面');};
       card.appendChild(img);
@@ -148,7 +148,7 @@
       }
       rows.sort((a,b)=>String(b.vod_time||'').localeCompare(String(a.vod_time||'')));
       renderCards(normalizeApiList(window.LibreCatalog.asVodPayload(rows.slice(0,84)),state.source,context));
-      showMsg((API_SITES[state.source]?.name||'')+' · '+(state.category==='全部'?'源首页最新':state.category)
+      showMsg((getApiSearchContext(state.source)?.apiName||'')+' · '+(state.category==='全部'?'源首页最新':state.category)
         +' · 本页 '+rows.length+' 条 · 第 '+state.page+' / '+state.pagecount+' 页（更新排序，非热榜）');
     }catch(error){
       if(req!==state.sequence)return;
@@ -164,7 +164,7 @@
       const ids=sourceOrder().filter(validSource);
       s.replaceChildren();
       ids.forEach(id=>{
-        const o=node('option','',API_SITES[id].name);
+        const o=node('option','',window.LibreAutoSourceRegistry?.label?.(id)||API_SITES[id]?.name||id);
         o.value=id;s.appendChild(o);
       });
       const remembered=setting('libretvBrowseSource');

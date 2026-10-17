@@ -62,7 +62,8 @@ test('one hundred sources, disabled source, adult host, duplicate and unselected
   const {policy:p,store}=policy(['safe_17'],['safe_0'],registry,custom);
   const ids=Array.from(p.safeSourceIds(true));
   assert.equal(ids.length,101);
-  assert.equal(ids[0],'safe_17');
+  assert.equal(ids[0],'custom_0');
+  assert.ok(ids.includes('safe_17'));
   assert.ok(ids.includes('safe_99'));
   assert.ok(ids.includes('custom_0'));
   assert.ok(!ids.includes('copy')&&!ids.includes('offline')&&!ids.includes('adult')&&!ids.includes('custom_1'));

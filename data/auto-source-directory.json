@@ -1,0 +1,259 @@
+{
+  "schema": 1,
+  "upstream": "https://www.ziyuanzu.com/top/__data.json",
+  "generatedAt": "2026-10-17T02:09:04.851Z",
+  "sourceCount": 21,
+  "entries": [
+    {
+      "id": "auto_8e529b20899aa1",
+      "name": "暴风资源站",
+      "api": "https://bfzyapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 2,
+      "uptime": 100,
+      "responseTime": 395,
+      "totalResources": 155624,
+      "rank": {
+        "uptime": 2
+      }
+    },
+    {
+      "id": "auto_e86eec9ebd2867",
+      "name": "360资源站",
+      "api": "https://360zy.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 3,
+      "uptime": 99.999,
+      "responseTime": 882,
+      "totalResources": 65092,
+      "rank": {}
+    },
+    {
+      "id": "auto_e69a581d15ee7f",
+      "name": "豪华资源站",
+      "api": "https://haohuazy.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 4,
+      "uptime": 100,
+      "responseTime": 719,
+      "totalResources": 109781,
+      "rank": {
+        "uptime": 3
+      }
+    },
+    {
+      "id": "auto_bfa23ac81653d3",
+      "name": "无尽资源站",
+      "api": "https://api.wujinapi.me/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 5,
+      "uptime": 100,
+      "responseTime": 74,
+      "totalResources": 118352,
+      "rank": {
+        "uptime": 4,
+        "speed": 2
+      }
+    },
+    {
+      "id": "auto_a9e4bb24a20f80",
+      "name": "牛牛资源",
+      "api": "https://api.niuniuzy.me/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 7,
+      "uptime": 100,
+      "responseTime": 239,
+      "totalResources": 122054,
+      "rank": {
+        "uptime": 5
+      }
+    },
+    {
+      "id": "auto_5ffb6e9a093b75",
+      "name": "魔都资源站",
+      "api": "https://www.mdzyapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 9,
+      "uptime": 100,
+      "responseTime": 1023,
+      "totalResources": 87346,
+      "rank": {
+        "uptime": 7
+      }
+    },
+    {
+      "id": "auto_704747d2b1f635",
+      "name": "鸭鸭资源站",
+      "api": "https://cj.yayazy.net/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 12,
+      "uptime": 100,
+      "responseTime": 230,
+      "totalResources": 120094,
+      "rank": {
+        "uptime": 9
+      }
+    },
+    {
+      "id": "auto_8235fdb356c501",
+      "name": "天涯影视资源站",
+      "api": "https://tyyszyapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 13,
+      "uptime": 100,
+      "responseTime": 211,
+      "totalResources": 69255,
+      "rank": {
+        "uptime": 10,
+        "speed": 7
+      }
+    },
+    {
+      "id": "auto_1e24f6974f6446",
+      "name": "极速资源站",
+      "api": "https://jszyapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 14,
+      "uptime": 100,
+      "responseTime": 182,
+      "totalResources": 109012,
+      "rank": {}
+    },
+    {
+      "id": "auto_b36cb234dc3dba",
+      "name": "爱奇艺资源站",
+      "api": "https://iqiyizyapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 15,
+      "uptime": 99.996,
+      "responseTime": 1290,
+      "totalResources": 66282,
+      "rank": {}
+    },
+    {
+      "id": "auto_d6abf09efcd48c",
+      "name": "猫眼资源",
+      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 16,
+      "uptime": 99.991,
+      "responseTime": 1091,
+      "totalResources": 33816,
+      "rank": {}
+    },
+    {
+      "id": "auto_74a11866154393",
+      "name": "虎牙资源站",
+      "api": "https://huyazy.net/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 18,
+      "uptime": 99.999,
+      "responseTime": 552,
+      "totalResources": 109686,
+      "rank": {}
+    },
+    {
+      "id": "auto_9374d86c798e58",
+      "name": "速播资源站",
+      "api": "https://subocj.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 19,
+      "uptime": 100,
+      "responseTime": 765,
+      "totalResources": 110682,
+      "rank": {}
+    },
+    {
+      "id": "auto_060324185727f0",
+      "name": "非凡资源站",
+      "api": "https://ffzy5.tv/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 21,
+      "uptime": 100,
+      "responseTime": 804,
+      "totalResources": 97821,
+      "rank": {}
+    },
+    {
+      "id": "auto_5a69484ce0ffec",
+      "name": "飘零影院资源站",
+      "api": "https://p2100.net/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 22,
+      "uptime": 99.994,
+      "responseTime": 365,
+      "totalResources": 98019,
+      "rank": {}
+    },
+    {
+      "id": "auto_5c413d55f2ca2d",
+      "name": "樱花资源站",
+      "api": "https://m3u8.apiyhzy.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 23,
+      "uptime": 100,
+      "responseTime": 411,
+      "totalResources": 101910,
+      "rank": {}
+    },
+    {
+      "id": "auto_d2c2bbfb3b23d3",
+      "name": "黑料资源站",
+      "api": "https://heiliaozyapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 27,
+      "uptime": 100,
+      "responseTime": 1176,
+      "totalResources": 98642,
+      "rank": {}
+    },
+    {
+      "id": "auto_fc4bc5d92b095f",
+      "name": "光速资源站",
+      "api": "https://api.guangsuapi.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 30,
+      "uptime": 100,
+      "responseTime": 263,
+      "totalResources": 110746,
+      "rank": {}
+    },
+    {
+      "id": "auto_04a74fee1b8253",
+      "name": "茅台资源站",
+      "api": "https://mtzy5.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 31,
+      "uptime": 99.984,
+      "responseTime": 850,
+      "totalResources": 141203,
+      "rank": {}
+    },
+    {
+      "id": "auto_59763684b36e6f",
+      "name": "百度云资源站",
+      "api": "https://api.apibdzy.com/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 36,
+      "uptime": 100,
+      "responseTime": 259,
+      "totalResources": 48097,
+      "rank": {
+        "speed": 10
+      }
+    },
+    {
+      "id": "auto_86da29fdf273fd",
+      "name": "豆豆资源站",
+      "api": "https://api.douapi.cc/api.php/provide/vod",
+      "kind": "auto",
+      "catalogRank": 67,
+      "uptime": 100,
+      "responseTime": 719,
+      "totalResources": 54739,
+      "rank": {
+        "speed": 9
+      }
+    }
+  ]
+}
