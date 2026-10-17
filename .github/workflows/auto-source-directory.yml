@@ -1,0 +1,46 @@
+name: Refresh LibreTV Source Directory
+on:
+  schedule:
+    - cron: '25 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: libretv-auto-source-directory
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    if: github.repository == 't1tzhuce6-tech/LibreTV'
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch directory and validate CMS metadata
+        run: node scripts/sync-source-directory.mjs
+      - name: Open reviewable source catalog update (never push directly to main)
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: auto/source-directory-refresh
+          base: main
+          delete-branch: true
+          add-paths: |
+            js/auto-source-feed.js
+            data/auto-source-directory.json
+          commit-message: "chore: refresh validated LibreTV source directory"
+          title: "chore: refresh validated LibreTV source directory"
+          body: |
+            Daily candidate update from the public source directory.
+            CI, filtering and site review are required before merge.
+            No direct main pushes and no independent Cloudflare Worker.
+          labels: source-directory

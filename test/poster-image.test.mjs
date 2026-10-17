@@ -56,6 +56,6 @@ test('hot-list poster cards use the restricted same-origin relay, and cached PWA
   const worker=fs.readFileSync(root+'service-worker.js','utf8');
   assert.match(js,/return '\/poster-image\?url='\+encodeURIComponent\(normalized\)/);
   assert.match(js,/image.src=posterUrl\(item.cover\)/);
-  assert.match(html,/js\/hot-list\.js\?v=20261015b/);
-  assert.match(worker,/20261016-dr-portal-v6/);
+  assert.match(html,/js\/hot-list\.js\?v=20261016dual1/);
+  assert.match(worker,/20261017-directory-full-v2/);
 });

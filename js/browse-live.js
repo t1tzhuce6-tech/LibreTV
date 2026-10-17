@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  const sourceOrder=()=>window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS;
+  const sourceOrder=()=>window.LibreAutoSourceRegistry?.catalogIds?.() || window.LibreContentPolicy?.safeSourceIds?.(true) || DEFAULT_SELECTED_APIS;
   const liveProviders=[
     {id:'iptvorg',name:'IPTV-org 中文频道',url:'https://iptv-org.github.io/iptv/languages/zho.m3u'},
     {id:'guovin',name:'Guovin 央视／卫视',url:'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u'},
@@ -15,7 +15,7 @@
   const $=id=>document.getElementById(id);
   function node(tag,cls,label){const e=document.createElement(tag);if(cls)e.className=cls;if(label!==undefined)e.textContent=label;return e;}
   function setting(key,value){try{if(value===undefined)return localStorage.getItem(key);localStorage.setItem(key,value);}catch(e){return null;}}
-  function validSource(source){return typeof API_SITES!=='undefined'&&!!API_SITES[source];}
+  function validSource(source){return source?.startsWith?.('custom_')?!!getCustomApiInfo(source.slice(7)):typeof API_SITES!=='undefined'&&!!API_SITES[source];}
   function showMsg(message){$('ltBrowseStatus').textContent=message;}
   function appendButton(target,label,callback,selected){
     const b=node('button','lt-explore-btn'+(selected?' is-active':''),label);b.type='button';b.addEventListener('click',callback);target.appendChild(b);return b;
@@ -32,33 +32,57 @@
     if(mode!=='live')resetPlayer();
     if(mode==='live'&&!liveState.loaded)loadLiveProvider();
   }
-  function categoryMatches(name,key){
-    const rules={
-      '电影':/电影|电影片/,
-      '电视剧':/连续剧|电视剧/,
-      '国产剧':/大陆剧|国产剧/,
-      '美剧':/欧美剧/,
-      '短剧':/短剧/,
-      '动漫':/动漫|动画/,
-      '综艺':/综艺/
-    };
-    return rules[key]&&rules[key].test(name);
-  }
   function updateCategories(){
+    const byId=new Map(state.classes.map(c=>[String(c.type_id),c]));
+    if(state.typeId&&!byId.has(String(state.typeId)))state.typeId='';
     const select=$('ltBrowseCategory');select.replaceChildren();
-    state.classes.forEach(c=>{const o=node('option','',c.type_name);o.value=String(c.type_id);if(String(c.type_pid)!=='0')o.textContent='　'+c.type_name;select.appendChild(o);});
-    const all=node('option','','全部最新');all.value='';select.insertBefore(all,select.firstChild);
-    let typeId='';
-    if(state.category!=='全部'){
-      const exact=state.classes.find(c=>c.type_name===state.category);
-      const match=exact||state.classes.find(c=>categoryMatches(c.type_name,state.category));
-      if(match)typeId=String(match.type_id);
+    const all=node('option','','源首页 / 最新');all.value='';select.append(all);
+    for(const c of state.classes){
+      const option=node('option','',(!['0',''].includes(String(c.type_pid))?'↳ ':'')+c.type_name);
+      option.value=String(c.type_id);select.append(option);
     }
-    state.typeId=typeId;select.value=typeId;
-    const tabs=$('ltBrowseCats');tabs.replaceChildren();
-    ['全部','电影','电视剧','国产剧','美剧','短剧','动漫','综艺'].forEach(key=>{
-      appendButton(tabs,key,()=>{state.category=key;state.page=1;updateCategories();loadList();},state.category===key);
-    });
+    select.value=state.typeId;
+    const roots=state.classes.filter(c=>['0',''].includes(String(c.type_pid))||!byId.has(String(c.type_pid)));
+    const tabs=$('ltBrowseCats'),levels=$('ltBrowseSubcats');tabs.replaceChildren();levels.replaceChildren();
+    const choose=(id)=>{
+      state.typeId=id;state.category=byId.get(id)?.type_name||'全部';
+      state.page=1;updateCategories();loadList();
+    };
+    appendButton(tabs,'源首页 / 最新',()=>choose(''),!state.typeId);
+    const chain=[];let next=state.typeId,guard=new Set();
+    while(next&&byId.has(next)&&!guard.has(next)){
+      guard.add(next);chain.unshift(next);
+      const parent=String(byId.get(next).type_pid);next=parent==='0'?'':parent;
+    }
+    const activeRoot=chain[0]||'';
+    for(const c of roots)appendButton(tabs,c.type_name,()=>choose(String(c.type_id)),String(c.type_id)===activeRoot);
+    let parent=null;
+    for(let depth=0;depth<chain.length;depth++){
+      parent=chain[depth];
+      const children=state.classes.filter(c=>String(c.type_pid)===parent);
+      if(!children.length)continue;
+      const section=node('div','lt-explore-level');
+      section.append(node('small','','分类 · '+byId.get(parent)?.type_name));
+      const line=node('div','lt-explore-cats');
+      const active=chain[depth+1]||'';
+      appendButton(line,'全部'+byId.get(parent)?.type_name,()=>choose(parent),!active);
+      for(const c of children)appendButton(line,c.type_name,()=>choose(String(c.type_id)),String(c.type_id)===active);
+      section.append(line);levels.append(section);
+    }
+    if(state.typeId&&!state.classes.some(c=>String(c.type_pid)===state.typeId)){
+      // Leaf selected: keep the parent choices visible for switching siblings.
+      const leaf=byId.get(state.typeId),parentId=String(leaf?.type_pid||'');
+      if(parentId&&parentId!=='0'&&!chain.slice(0,-1).includes(parentId)){
+        const siblings=state.classes.filter(c=>String(c.type_pid)===parentId);
+        if(siblings.length){
+          const section=node('div','lt-explore-level');
+          section.append(node('small','','分类 · '+(byId.get(parentId)?.type_name||'')));
+          const line=node('div','lt-explore-cats');
+          for(const c of siblings)appendButton(line,c.type_name,()=>choose(String(c.type_id)),String(c.type_id)===state.typeId);
+          section.append(line);levels.append(section);
+        }
+      }
+    }
   }
   async function loadCategories(){
     const req=++state.sequence;
@@ -87,7 +111,7 @@
       const card=node('button','lt-explore-card');card.type='button';
       const img=node('img','lt-explore-cover');img.loading='lazy';img.alt=String(item.vod_name||'影片');
       img.referrerPolicy='no-referrer';
-      const pic=normalizeImageUrl(item.vod_pic||'',API_SITES[sourceId]?.api||'');
+      const pic=normalizeImageUrl(item.vod_pic||'',getApiSearchContext(sourceId)?.apiBaseUrl||'');
       img.src=pic||createImagePlaceholder('暂无封面');
       img.onerror=()=>{img.onerror=null;img.src=createImagePlaceholder('暂无封面');};
       card.appendChild(img);
@@ -108,9 +132,8 @@
     try{
       const context=getApiSearchContext(state.source);
       if(!context)throw new Error('未知源');
-      const ids=requestedCategories();
-      const endpoints=ids.length?ids.map(id=>context.apiBaseUrl+'?ac=videolist&pg='+state.page+'&t='+encodeURIComponent(id))
-        :[context.apiBaseUrl+'?ac=videolist&pg='+state.page];
+      // Query exactly the selected source category. Do not synthesize source hierarchy.
+      const endpoints=[context.apiBaseUrl+'?ac=videolist&pg='+state.page+(state.typeId?'&t='+encodeURIComponent(state.typeId):'')];
       const responses=await Promise.all(endpoints.map(url=>fetchVodApiJson(url).catch(()=>null)));
       if(req!==state.sequence)return;
       const good=responses.filter(data=>data&&Array.isArray(data.list));
@@ -125,7 +148,7 @@
       }
       rows.sort((a,b)=>String(b.vod_time||'').localeCompare(String(a.vod_time||'')));
       renderCards(normalizeApiList(window.LibreCatalog.asVodPayload(rows.slice(0,84)),state.source,context));
-      showMsg((API_SITES[state.source]?.name||'')+' · '+(state.category==='全部'?'多分类最新':state.category)
+      showMsg((getApiSearchContext(state.source)?.apiName||'')+' · '+(state.category==='全部'?'源首页最新':state.category)
         +' · 本页 '+rows.length+' 条 · 第 '+state.page+' / '+state.pagecount+' 页（更新排序，非热榜）');
     }catch(error){
       if(req!==state.sequence)return;
@@ -141,7 +164,7 @@
       const ids=sourceOrder().filter(validSource);
       s.replaceChildren();
       ids.forEach(id=>{
-        const o=node('option','',(API_SITES[id].managed?'🔄 订阅 · ':'✅ 默认 · ')+API_SITES[id].name);
+        const o=node('option','',window.LibreAutoSourceRegistry?.label?.(id)||API_SITES[id]?.name||id);
         o.value=id;s.appendChild(o);
       });
       const remembered=setting('libretvBrowseSource');
@@ -149,14 +172,14 @@
       else if(!ids.includes(state.source))state.source=ids[0]||'';
       s.value=state.source;
       if(state.source)loadCategories();
-      else showMsg('等待远程订阅源加载…');
+      else showMsg('还没有可用的片源，请在设置中添加。');
     };
     refreshSources();
-    window.addEventListener('libretv:preset-data',refreshSources);
-    s.addEventListener('change',()=>{state.source=s.value;state.page=1;state.category='全部';setting('libretvBrowseSource',state.source);loadCategories();});
+    s.addEventListener('change',()=>{state.source=s.value;state.page=1;state.category='全部';state.typeId='';setting('libretvBrowseSource',state.source);loadCategories();});
     $('ltBrowseCategory').addEventListener('change',e=>{
       state.typeId=e.target.value;
-      state.category=e.target.selectedOptions[0]?.textContent.trim()||'全部';
+      state.category=state.classes.find(c=>String(c.type_id)===state.typeId)?.type_name||'全部';
+      updateCategories();
       if(!state.typeId)state.category='全部';
       state.page=1;loadList();
     });
@@ -246,7 +269,7 @@
     for(const p of liveProviders){const o=node('option','',p.name);o.value=p.id;select.appendChild(o);}
     const savedProvider=setting('libretvLiveProvider');
     liveState.provider=liveProviders.some(p=>p.id===savedProvider)?savedProvider:
-      (window.LibreProfiles?.active==='managed'?'guovin':'iptvorg');
+      'iptvorg';
     select.value=liveState.provider;
     select.addEventListener('change',()=>{
       liveState.provider=select.value;
@@ -268,7 +291,7 @@
   function start(){
     const root=node('section','lt-explore');root.id='ltExplore';
     root.innerHTML='<div class="lt-explore-top"><div><h2>按片源分类浏览</h2><p>各影视源独立分类与片单。已过滤成人内容。</p></div></div>'
-      +'<div id="ltBrowseBody"><div class="lt-explore-controls"><label>影视源 <select id="ltBrowseSource"></select></label><label>细分类 <select id="ltBrowseCategory"></select></label></div><div id="ltBrowseCats" class="lt-explore-cats"></div><p id="ltBrowseStatus" class="lt-explore-status"></p><div id="ltBrowseCards" class="lt-explore-grid"></div><div class="lt-explore-paging"><button id="ltPrevPage" type="button">上一页</button><button id="ltNextPage" type="button">下一页</button></div></div>'
+      +'<div id="ltBrowseBody"><div class="lt-explore-controls"><label>影视源 <select id="ltBrowseSource"></select></label><label>细分类 <select id="ltBrowseCategory"></select></label></div><div id="ltBrowseCats" class="lt-explore-cats"></div><div id="ltBrowseSubcats" class="lt-explore-subcats"></div><p id="ltBrowseStatus" class="lt-explore-status"></p><div id="ltBrowseCards" class="lt-explore-grid"></div><div class="lt-explore-paging"><button id="ltPrevPage" type="button">上一页</button><button id="ltNextPage" type="button">下一页</button></div></div>'
 ;
     const after=$('searchArea');if(!after)return;
     after.insertAdjacentElement('afterend',root);

@@ -39,6 +39,6 @@ test('live TV is removed from the rendered discovery page, but profile source se
   assert.match(start,/ltBrowseCategory/);
   const html=fs.readFileSync(root+'index.html','utf8');
   const player=fs.readFileSync(root+'player.html','utf8');
-  assert.ok(html.indexOf('content-policy.js')<html.indexOf('profile-manager.js'));
-  assert.ok(player.indexOf('content-policy.js')<player.indexOf('profile-manager.js'));
+  assert.ok(html.includes('content-policy.js') && !html.includes('profile-manager.js'));
+  assert.ok(player.includes('content-policy.js') && !player.includes('profile-manager.js'));
 });
