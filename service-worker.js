@@ -1,4 +1,4 @@
-const APP_VERSION = '20261016-dualviews-v1';
+const APP_VERSION = '20261017-clean-home-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -9,10 +9,6 @@ const APP_SHELL_ASSETS = [
   '/cast.html',
   '/watch.html',
   '/about.html',
-  '/dr.html',
-  '/css/dr-portal.css',
-  '/css/dr-navigation.css',
-  '/js/dr-portal.js',
   '/diagnostics.html',
   OFFLINE_URL,
   '/manifest.json',
@@ -23,7 +19,6 @@ const APP_SHELL_ASSETS = [
   '/css/theme.css',
   '/css/browse-live.css',
   '/css/dual-discovery.css',
-  '/css/profile-schemes.css',
   '/css/hot-list.css',
   '/css/iqiyi-ranks.css',
   '/css/nexus-lists.css',
@@ -46,7 +41,6 @@ const APP_SHELL_ASSETS = [
   '/js/iqiyi-ranks.js',
   '/js/nexus-lists.js',
   '/js/curated-lists.js',
-  '/js/profile-manager.js',
   '/js/catalog-adapter.js',
   '/js/browse-live.js',
   '/js/ui.js',

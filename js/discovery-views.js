@@ -26,7 +26,13 @@
      });
      buttons[key]=a;bar.append(a);
    }
-   hot.insertAdjacentElement('beforebegin',bar);
+   // True homepage order: search and history, two navigation cards, then selected content.
+   search.insertAdjacentElement('afterend',bar);
+   bar.insertAdjacentElement('afterend',hot);
+   hot.insertAdjacentElement('afterend',library);
+   const history=root.document.getElementById('ltInlineHistory');
+   const continueWatching=root.document.getElementById('continueWatching');
+   if(history&&continueWatching)history.append(continueWatching);
    function select(value,push){
      const view=value==='sources'?'sources':'ranks';
      root.document.body.classList.toggle('lt-view-sources',view==='sources');
@@ -37,7 +43,7 @@
      }
      try{root.localStorage.setItem(VIEW_KEY,view)}catch{}
      if(push){const u=new URL(root.location.href);u.searchParams.set('view',view);root.history.pushState({view},'',u.pathname+u.search+u.hash)}
-     // Keep the global site search and profile switcher available on both views.
+     // Keep the same global search and history above both views.
      // The ranking/source sections remain live and retain their own selections.
    }
    root.addEventListener('popstate',()=>select(readView(),false));

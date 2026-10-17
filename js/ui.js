@@ -891,7 +891,7 @@ toggleSettings = function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         const historyPanel = document.getElementById('historyPanel');
-        const historyButton = document.querySelector('button[onclick="toggleHistory(event)"]');
+        const historyButton = document.querySelector('[data-history-trigger]');
 
         if (historyPanel && historyButton &&
             !historyPanel.contains(e.target) &&

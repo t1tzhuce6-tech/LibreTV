@@ -100,8 +100,6 @@
         }catch{return [];}finally{clearTimeout(timer);}
     }
     async function discover(session) {
-        if(['safe-all','rank-selected'].includes(session.request.scope))
-            await window.LibreProfiles?.refresh?.();
         const selected = read('selectedAPIs', DEFAULT_SELECTED_APIS);
         const rankScoped=session.request.scope==='rank-selected';
         const broaden = ['safe-all','rank-selected'].includes(session.request.scope);

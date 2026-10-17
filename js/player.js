@@ -2759,7 +2759,6 @@ async function showSwitchResourceModal() {
     modal.classList.remove('hidden');
 
     // Load the latest subscription (or its cache) before enumerating the full pool.
-    await window.LibreProfiles?.refresh?.();
     if(probeController.signal.aborted)return;
     const rankScoped=new URLSearchParams(location.search).get('scope')==='rank-selected';
     const candidateIds=rankScoped && window.LibreRankSources

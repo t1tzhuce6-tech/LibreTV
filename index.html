@@ -21,11 +21,9 @@
     <link rel="stylesheet" href="css/modals.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/index.css">
-    <link rel="stylesheet" href="css/dr-navigation.css?v=20261016a">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/browse-live.css">
-    <link rel="stylesheet" href="css/dual-discovery.css?v=20261016dual1">
-    <link rel="stylesheet" href="css/profile-schemes.css?v=20261014b">
+    <link rel="stylesheet" href="css/dual-discovery.css?v=20261017home2">
     <link rel="stylesheet" href="css/hot-list.css?v=20261014long1">
     <link rel="stylesheet" href="css/iqiyi-ranks.css?v=20261015a">
     <link rel="stylesheet" href="css/nexus-lists.css?v=20261015b">
@@ -33,12 +31,6 @@
 </head>
 <body class="page-bg text-white">
     <!-- 左上角：观看历史 -->
-    <button onclick="toggleHistory(event)" class="lt-fab lt-fab-left" aria-label="观看历史" title="观看历史">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span class="lt-fab-label">历史</span>
-    </button>
 
     <!-- 右上角：设置 -->
     <button onclick="toggleSettings(event)" class="lt-fab lt-fab-right" aria-label="打开设置" title="设置">
@@ -199,7 +191,6 @@
         <div class="flex-1 flex flex-col">
             <!-- 网站标志和口号 -->
             <header class="lt-hero">
-                <nav class="lt-dual-nav" aria-label="影视系统切换"><a href="./" class="lt-dual-current" aria-current="page">LibreTV · 主站</a><a href="dr.html" class="lt-dual-link">DR影视 · 独立专区 ↗</a></nav>
                 <div class="lt-badge">
                     <span class="lt-badge-dot">FREE</span>
                     无广告 · 免注册 · 多源聚合
@@ -260,9 +251,10 @@
                     </div>
 
                     <!-- 最近搜索记录 -->
-                    <div id="recentSearches" class="flex flex-wrap gap-2" aria-label="最近搜索记录">
-                        <!-- 这里会动态插入最近的搜索记录 -->
-                    </div>
+                    <section id="ltInlineHistory" class="lt-inline-history" aria-label="历史记录">
+                        <div class="lt-inline-history-head"><h2>历史记录</h2><button type="button" data-history-trigger onclick="toggleHistory(event)">查看观看历史</button></div>
+                        <div id="recentSearches" class="flex flex-wrap gap-2" aria-label="最近搜索记录"></div>
+                    </section>
                 </div>
             </div>
 
@@ -455,7 +447,6 @@
     <script src="js/source-speed.js"></script>
     <script src="js/customer_site.js?v=20261015safe1"></script>
     <script src="js/content-policy.js?v=20261015clean1"></script>
-    <script src="js/profile-manager.js?v=20261015all1"></script>
     <script src="js/ui.js"></script>
     <script src="js/api.js"></script>
     <script src="js/catalog-adapter.js"></script>
@@ -478,7 +469,7 @@
     <script src="js/app.js"></script>
     <script src="libs/hls.min.js"></script>
     <script src="js/browse-live.js?v=20261016dual1"></script>
-    <script src="js/discovery-views.js?v=20261016dual1"></script>
+    <script src="js/discovery-views.js?v=20261017home2"></script>
 
 
     <!-- PWA 注册 -->

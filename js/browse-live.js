@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  const sourceOrder=()=>window.LibreContentPolicy?.safeSourceIds?.(true) || window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS;
+  const sourceOrder=()=>window.LibreContentPolicy?.safeSourceIds?.(true) || DEFAULT_SELECTED_APIS;
   const liveProviders=[
     {id:'iptvorg',name:'IPTV-org 中文频道',url:'https://iptv-org.github.io/iptv/languages/zho.m3u'},
     {id:'guovin',name:'Guovin 央视／卫视',url:'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u'},
@@ -164,7 +164,7 @@
       const ids=sourceOrder().filter(validSource);
       s.replaceChildren();
       ids.forEach(id=>{
-        const o=node('option','',(API_SITES[id].managed?'🔄 订阅 · ':'✅ 默认 · ')+API_SITES[id].name);
+        const o=node('option','',API_SITES[id].name);
         o.value=id;s.appendChild(o);
       });
       const remembered=setting('libretvBrowseSource');
@@ -172,10 +172,9 @@
       else if(!ids.includes(state.source))state.source=ids[0]||'';
       s.value=state.source;
       if(state.source)loadCategories();
-      else showMsg('等待远程订阅源加载…');
+      else showMsg('还没有可用的片源，请在设置中添加。');
     };
     refreshSources();
-    window.addEventListener('libretv:preset-data',refreshSources);
     s.addEventListener('change',()=>{state.source=s.value;state.page=1;state.category='全部';state.typeId='';setting('libretvBrowseSource',state.source);loadCategories();});
     $('ltBrowseCategory').addEventListener('change',e=>{
       state.typeId=e.target.value;
@@ -270,7 +269,7 @@
     for(const p of liveProviders){const o=node('option','',p.name);o.value=p.id;select.appendChild(o);}
     const savedProvider=setting('libretvLiveProvider');
     liveState.provider=liveProviders.some(p=>p.id===savedProvider)?savedProvider:
-      (window.LibreProfiles?.active==='managed'?'guovin':'iptvorg');
+      'iptvorg';
     select.value=liveState.provider;
     select.addEventListener('change',()=>{
       liveState.provider=select.value;

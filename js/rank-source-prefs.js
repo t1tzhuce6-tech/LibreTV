@@ -62,7 +62,6 @@
       hint.textContent=chosen.size?'勾选仅影响热榜找片；按列表顺序优先检索，后续来源仍会分批查询。':'目前没有勾选片源，热榜找片将不执行搜索。';
     }
     root.addEventListener('libretv:rank-sources-changed',render);
-    root.addEventListener('libretv:preset-data',render);
     render();
   }
   root.LibreRankSources=Object.freeze({available,ordered,selected,update,initPanel});

@@ -22,3 +22,20 @@ body.lt-view-ranks #ltExplore{display:none!important}
 .lt-rank-source-row input{accent-color:#38bdf8;width:15px;height:15px}
 .lt-rank-sources-hint{font-size:12px;color:#9ca3af;margin:10px 0 2px}
 @media(max-width:640px){.lt-discovery-nav{padding:0 12px}.lt-discovery-link{padding:12px 10px}.lt-discovery-link strong{font-size:15px}.lt-discovery-link small{font-size:11px}.lt-rank-sources{padding:10px}.lt-rank-source-row button{padding:8px 10px}}
+
+/* Simplified homepage: global search -> history -> the two content destinations. */
+.lt-main .lt-hero{padding-bottom:.4rem}
+.lt-main #searchArea{flex:none;width:100%}
+.lt-main .lt-search-wrap{margin:1rem auto 0}
+.lt-inline-history{width:100%;margin:16px auto 0;padding:15px 17px;border:1px solid #334155;background:#111b2c;border-radius:14px;text-align:left}
+.lt-inline-history-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.lt-inline-history-head h2{font-size:16px;font-weight:720;color:#e2e8f0}
+.lt-inline-history-head button{font-size:12px;border:1px solid #43546c;border-radius:9px;background:#253550;color:#d9e8ff;padding:8px 12px;cursor:pointer}
+.lt-inline-history #recentSearches{margin-top:8px;padding:0}
+.lt-inline-history #recentSearches:empty:before{content:'暂无搜索记录';color:#9ca3af;font-size:12px}
+.lt-inline-history #continueWatching{margin:12px 0 0;width:100%;padding:0}
+.lt-inline-history #continueWatching.hidden{display:none}
+.lt-main .lt-discovery-nav{max-width:46rem;margin:16px auto 6px;padding:0}
+.lt-main .lt-discovery-link{min-height:88px;justify-content:center}
+.lt-inline-history .lt-section-head{margin:0 0 8px}
+@media(max-width:640px){.lt-inline-history{padding:12px;margin-top:12px}.lt-main .lt-discovery-nav{margin:12px auto}.lt-main .lt-discovery-link{min-height:70px}.lt-main #searchArea{padding:0 2px}}

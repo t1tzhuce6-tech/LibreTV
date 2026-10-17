@@ -1,4 +1,4 @@
-/* One content filtering policy for both configuration schemes and the source browser. */
+/* One content filtering policy shared by search, rankings and source library. */
 (function(root){
   'use strict';
   const blockedSource=/(?:色情|成人|情色|三级|福利|麻豆|杏吧|蝙蝠|桃花|色逼|极品|av资源|成人资源|18\+|porn|xxx|explicit|\bsex\b|\badult\b)/i;
@@ -29,10 +29,10 @@
   function filterVideos(items){
     return (Array.isArray(items)?items:[]).filter(item=>!isAdultVideo(item));
   }
-  // The viewer requested an always-on content filter (including old scheme-local preferences).
+  // The viewer requested an always-on content filter (including historical local preferences).
   try{root.localStorage?.setItem('yellowFilterEnabled','true');}catch{}
-  // Playback uses every registered safe source, regardless of checkbox state or preset.
-  // User checkboxes still set search priority and remain independent in each preset.
+  // Playback uses every registered safe source, regardless of checkbox state.
+  // User checkboxes still set search priority and remain user configurable.
   function safeSourceIds(includeAvailable=false){
     let selected=[],custom=[];
     try{

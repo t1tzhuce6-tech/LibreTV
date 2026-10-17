@@ -146,10 +146,9 @@ function getAvailableDefaultApiIds() {
 }
 
 function initializeDefaultSettings() {
-    if (window.LibreProfiles?.active === 'managed') return; // 远程方案独立保存，不强制塞入旧的七个源
     const defaultApiIds = getAvailableDefaultApiIds();
     // Personal deployment: keep only the marked default VOD sources active.
-    const visibleIds = selectedAPIs.filter(apiId => defaultApiIds.includes(apiId));
+    const visibleIds = selectedAPIs.filter(apiId => API_SITES[apiId] && !window.LibreContentPolicy?.isAdultSource?.(API_SITES[apiId]));
     if (visibleIds.length !== selectedAPIs.length) {
         selectedAPIs = visibleIds.length ? visibleIds : [...defaultApiIds];
         localStorage.setItem('selectedAPIs', JSON.stringify(selectedAPIs));
@@ -243,7 +242,6 @@ function initAPICheckboxes() {
     Object.keys(API_SITES).forEach(apiKey => {
         const api = API_SITES[apiKey];
         if (isAdultSourceId(apiKey)) return;
-        if (!(window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS).includes(apiKey)) return;
 
         const checked = selectedAPIs.includes(apiKey);
 

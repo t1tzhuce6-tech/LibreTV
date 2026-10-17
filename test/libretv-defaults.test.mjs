@@ -1230,7 +1230,7 @@ test('release metadata is bumped for this update', async () => {
   assert.equal(lockJson.version, '1.2.28');
   assert.equal(lockJson.packages[''].version, '1.2.28');
   assert.match(config, /version:\s*'1\.2\.28'/);
-  assert.match(serviceWorker, /const APP_VERSION = '20261016-dualviews-v1'/);
+  assert.match(serviceWorker, /const APP_VERSION = '20261017-clean-home-v1'/);
   assert.match(serviceWorker, /'\/js\/player-recommendations\.js'/);
   assert.match(serviceWorker, /'\/js\/mobile-fullscreen\.js'/);
   assert.match(serviceWorker, /'\/css\/theme\.css'/);
