@@ -2552,6 +2552,22 @@ function closeEmbeddedPlayback() {
     return false;
 }
 
+function launchCurrentInPotPlayer() {
+    const url = currentVideoUrl || currentEpisodes[currentEpisodeIndex] || '';
+    const result = window.LibreExternalPlayer?.launch(url);
+    if (!result?.ok) {
+        const warning = result?.reason === 'windows_only'
+            ? 'PotPlayer 外部播放仅支持 Windows 电脑'
+            : '当前线路不是可直接交给 PotPlayer 的视频地址，请先换一条直链';
+        if (typeof showToast === 'function') showToast(warning, 'warning');
+        return;
+    }
+    try { if (art?.video && !art.video.paused) art.video.pause(); } catch {}
+    if (typeof showToast === 'function') {
+        showToast('已请求浏览器打开 PotPlayer；首次使用请允许启动外部应用', 'info');
+    }
+}
+
 function renderResourceInfoBar() {
     // 获取容器元素
     const container = document.getElementById('resourceInfoBarContainer');
@@ -2598,6 +2614,7 @@ function renderResourceInfoBar() {
       </div>
       <div class="quick-player-actions">
         <button type="button" class="resource-switch-btn" id="switchResourceBtn" onclick="showSwitchResourceModal()">换源</button>
+        ${window.LibreExternalPlayer?.isWindows() ? '<button type="button" id="potPlayerButton" title="把当前直连视频交给本机 PotPlayer" onclick="launchCurrentInPotPlayer()">PotPlayer 播放</button>' : ''}
         ${currentEpisodes.length > 1 ? '<button type="button" id="quickEpisodesButton" aria-expanded="false" onclick="toggleQuickEpisodes()">选集</button>' : ''}
         <button type="button" id="quickSettingsButton" aria-expanded="false" onclick="toggleQuickSettings()">更多</button>
       </div>

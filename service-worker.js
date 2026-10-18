@@ -1,4 +1,4 @@
-const APP_VERSION = '20261017-directory-full-v2';
+const APP_VERSION = '20261018-potplayer-preview-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -55,6 +55,7 @@ const APP_SHELL_ASSETS = [
   '/js/onboarding.js',
   '/js/app.js',
   '/js/player-errors.js',
+  '/js/potplayer-launch.js',
   '/js/player.js',
   '/js/cast-receiver.js',
   '/js/diagnostics.js',
