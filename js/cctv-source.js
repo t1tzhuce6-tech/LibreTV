@@ -22,7 +22,10 @@
    const pos=x.indexOf('$');if(pos<0)return null;
    const link=safeLink(x.slice(pos+1));if(!link)return null;
    return {title:x.slice(0,pos).trim().slice(0,160),link};
-  }).filter(Boolean);
+  }).filter(Boolean).sort((a,b)=>{
+   const aa=a.title.match(/第\s*(\d+)\s*集/),bb=b.title.match(/第\s*(\d+)\s*集/);
+   return aa&&bb?Number(aa[1])-Number(bb[1]):0;
+  });
  }
  async function openDetail(id,title){
   const modal=root.document.getElementById('modal'),

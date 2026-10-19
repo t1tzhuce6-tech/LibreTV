@@ -90,3 +90,24 @@ test('CCTV catalog calls bypass third-party proxy, other source calls keep origi
  assert(requests[0].startsWith(origin+'/cctv-vod?'));
  assert(requests[1].startsWith('/proxy/'));
 });
+test('featured CCTV appears first without dropping or reordering the other sources',()=>{
+ const raw=fs.readFileSync(root+'js/browse-live.js','utf8');
+ const anchor="  document.addEventListener('DOMContentLoaded',start);";
+ assert(raw.includes(anchor));
+ const window={CctvSource:{ID:'cctv_official'},LibreAutoSourceRegistry:{
+  catalogIds:()=>['ffzy','managed_1','cctv_official','managed_2']}};
+ vm.runInNewContext(raw.replace(anchor,"  window.__sourceOrder=sourceOrder;"),
+  {window,document:{addEventListener(){}},DEFAULT_SELECTED_APIS:['ffzy'],console});
+ assert.deepEqual(Array.from(window.__sourceOrder()),
+  ['cctv_official','ffzy','managed_1','managed_2']);
+});
+test('CCTV actual episodes sort by episode number and reject external official-looking links',()=>{
+ const w={location:{origin:'https://example.test'},extendAPISites(){},document:{}};
+ vm.runInNewContext(fs.readFileSync(root+'js/cctv-source.js','utf8'),{window:w,URL,console});
+ const base='https://tv.cctv.com/2026/10/18/VIDEabcdeABCDE0987654321.shtml';
+ const vod={vod_play_url:['第2集$'+base,'第3集$'+base,'第1集$'+base,
+  '假第4集$https://example.com/2026/10/18/VIDEbad.shtml'].join('#')};
+ const eps=w.CctvSource.parseEpisodes(vod);
+ assert.equal(eps.length,3);
+ assert.deepEqual(Array.from(eps,x=>x.title),['第1集','第2集','第3集']);
+});
