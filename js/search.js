@@ -86,9 +86,15 @@ async function fetchVodApiJson(apiUrl, headers = API_CONFIG.search.headers, oute
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-        const proxiedUrl = await window.ProxyAuth?.addAuthToProxyUrl ?
+        // The one first-party CCTV source uses the same-origin Pages Function directly.
+        // Do not send it through LibreTV's arbitrary third-party /proxy/ transport.
+        const ownOrigin = window.location?.origin || '';
+        const direct = ownOrigin ? new URL(apiUrl, ownOrigin) : null;
+        const isCctv = !!direct && direct.origin === ownOrigin &&
+            direct.pathname === '/cctv-vod' && window.CctvSource?.api === direct.origin + direct.pathname;
+        const proxiedUrl = isCctv ? direct.href : (await window.ProxyAuth?.addAuthToProxyUrl ?
             await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL + encodeURIComponent(apiUrl)) :
-            PROXY_URL + encodeURIComponent(apiUrl);
+            PROXY_URL + encodeURIComponent(apiUrl));
 
         const response = await fetch(proxiedUrl, {
             headers,

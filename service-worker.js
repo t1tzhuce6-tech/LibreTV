@@ -1,4 +1,4 @@
-const APP_VERSION = '20261017-directory-full-v2';
+const APP_VERSION = '20261019-cctv-unified-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -18,6 +18,7 @@ const APP_SHELL_ASSETS = [
   '/css/watch.css',
   '/css/theme.css',
   '/css/browse-live.css',
+  '/css/cctv-source.css',
   '/css/dual-discovery.css',
   '/css/hot-list.css',
   '/css/iqiyi-ranks.css',
@@ -35,6 +36,7 @@ const APP_SHELL_ASSETS = [
   '/js/episode-context.js',
   '/js/modal-accessibility.js',
   '/js/customer_site.js',
+  '/js/cctv-source.js',
   '/js/auto-source-feed.js',
   '/js/auto-source-registry.js',
   '/js/content-policy.js',
@@ -78,6 +80,7 @@ function isNetworkOnlyRequest(request) {
 
   return (
     pathname.startsWith('/api/') ||
+    pathname.startsWith('/cctv-vod') ||
     pathname.startsWith('/proxy/') ||
     pathname.includes('/api.php/') ||
     pathname.endsWith('.m3u8') ||
