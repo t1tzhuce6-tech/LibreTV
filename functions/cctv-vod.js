@@ -27,7 +27,9 @@ async function fetchOfficial(base,path,params,signal){
  signal?.addEventListener('abort',abort,{once:true});
  const timer=setTimeout(()=>controller.abort(),base===SEARCH?16000:10000);
  try{
-  const r=await fetch(u,{signal:controller.signal,redirect:'error',headers:{Accept:'application/json',Referer:'https://tv.cctv.com/'}});
+  let r;
+  try{r=await fetch(u,{signal:controller.signal,redirect:'error',headers:{Accept:'application/json',Referer:'https://tv.cctv.com/'}});}
+  catch(e){throw new Error('NETWORK_FETCH_'+String(e?.name||'UNKNOWN')+'_'+String(e?.message||'').slice(0,90))}
   if(!r.ok||Number(r.headers.get('content-length'))>1300000)throw Error('upstream '+r.status);
   const body=await r.text();if(body.length>1300000)throw Error('upstream too large');
   const data=JSON.parse(body);return data;
@@ -133,6 +135,6 @@ export async function onRequestGet({request}){
     /^upstream \d{3}$/.test(message)?'CCTV_UPSTREAM_HTTP_'+message.slice(-3):
     message.endsWith('schema')?'CCTV_UPSTREAM_SCHEMA':
     message==='upstream too large'?'CCTV_UPSTREAM_TOO_LARGE':'CCTV_UPSTREAM_NETWORK';
-  return reply({error:'CCTV upstream temporarily unavailable',code},502);
+  return reply({error:'CCTV upstream temporarily unavailable',code,...(q.get('diag')==='1'?{diagnostic:message.slice(0,130)}:{})},502);
  }
 }
