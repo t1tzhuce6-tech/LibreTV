@@ -127,5 +127,12 @@ export async function onRequestGet({request}){
    return reply({error:'Unknown category'},400);
   const list=await catalog(t,page,request.signal);
   return list?reply(list):reply({error:'Unknown category'},400);
- }catch{return reply({error:'CCTV upstream temporarily unavailable',code:'CCTV_UPSTREAM'},502)}
+ }catch(e){
+  const type=String(e?.name||''),message=String(e?.message||'');
+  const code=type==='AbortError'?'CCTV_TIMEOUT':
+    /^upstream \d{3}$/.test(message)?'CCTV_UPSTREAM_HTTP_'+message.slice(-3):
+    message.endsWith('schema')?'CCTV_UPSTREAM_SCHEMA':
+    message==='upstream too large'?'CCTV_UPSTREAM_TOO_LARGE':'CCTV_UPSTREAM_NETWORK';
+  return reply({error:'CCTV upstream temporarily unavailable',code},502);
+ }
 }
