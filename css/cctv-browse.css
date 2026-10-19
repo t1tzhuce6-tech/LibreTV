@@ -1,0 +1,18 @@
+.cctv-dialog{border:1px solid #45574e;border-radius:16px;background:#111b18;color:#f3f8f4;
+ width:min(920px,95vw);max-height:88vh;padding:22px;overflow:auto;box-shadow:0 20px 70px #000b}
+.cctv-dialog::backdrop{background:rgba(0,0,0,.8)}
+.cctv-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cctv-dialog-title{font-size:1.3rem;margin:0;color:#fff}
+.cctv-dialog-close,.cctv-more{border:1px solid #60756c;background:#273f33;
+ border-radius:9px;padding:9px 17px;color:#fff;cursor:pointer}
+.cctv-dialog-status{padding:10px 12px;background:#20362a;border-radius:9px;
+ color:#d7e8d8;font-size:.9rem}
+.cctv-description{line-height:1.65;color:#d0ded3}
+.cctv-episode-count{color:#d1dece;font-size:.9rem}
+.cctv-episode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+ gap:9px;margin:15px 0}
+.cctv-episode{display:block;border:1px solid #507560;background:#1a3024;
+ color:#f2fff5;text-decoration:none;padding:12px;border-radius:9px;line-height:1.4;word-break:break-word}
+.cctv-episode:hover,.cctv-episode:focus-visible{background:#304e3c;border-color:#8fdb9d}
+.cctv-more:disabled{opacity:.6;cursor:wait}
+@media(max-width:560px){.cctv-dialog{padding:15px}.cctv-episode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

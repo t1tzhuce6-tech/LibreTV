@@ -1,4 +1,4 @@
-const APP_VERSION = '20261016-dr-portal-v6';
+const APP_VERSION = '20261019-cctv-official-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
@@ -22,6 +22,7 @@ const APP_SHELL_ASSETS = [
   '/css/watch.css',
   '/css/theme.css',
   '/css/browse-live.css',
+  '/css/cctv-browse.css',
   '/css/profile-schemes.css',
   '/css/hot-list.css',
   '/css/iqiyi-ranks.css',
@@ -46,6 +47,7 @@ const APP_SHELL_ASSETS = [
   '/js/profile-manager.js',
   '/js/catalog-adapter.js',
   '/js/browse-live.js',
+  '/js/cctv-browse.js',
   '/js/ui.js',
   '/js/api.js',
   '/js/douban.js',
@@ -79,6 +81,7 @@ function isNetworkOnlyRequest(request) {
 
   return (
     pathname.startsWith('/api/') ||
+    pathname.startsWith('/cctv-vod') ||
     pathname.startsWith('/proxy/') ||
     pathname.includes('/api.php/') ||
     pathname.endsWith('.m3u8') ||

@@ -2,7 +2,13 @@
 (function () {
   'use strict';
 
-  const sourceOrder=()=>window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS;
+  const sourceOrder=()=>{
+    const ids=window.LibreProfiles?.visibleIds() || DEFAULT_SELECTED_APIS;
+    const cctv=window.CctvBrowse?.KEY;
+    return cctv&&typeof API_SITES!=='undefined'&&API_SITES[cctv]?
+      [cctv,...ids.filter(id=>id!==cctv)]:ids;
+  };
+  const isCctv=()=>window.CctvBrowse?.isSource(state.source)||false;
   const liveProviders=[
     {id:'iptvorg',name:'IPTV-org 中文频道',url:'https://iptv-org.github.io/iptv/languages/zho.m3u'},
     {id:'guovin',name:'Guovin 央视／卫视',url:'https://raw.githubusercontent.com/Guovin/iptv-api/gd/output/result.m3u'},
@@ -56,12 +62,39 @@
     }
     state.typeId=typeId;select.value=typeId;
     const tabs=$('ltBrowseCats');tabs.replaceChildren();
+    if(isCctv()){
+      if(!state.typeId&&state.classes.length){
+        state.typeId=String(state.classes[0].type_id);
+        state.category=state.classes[0].type_name;
+        select.value=state.typeId;
+      }
+      for(const c of state.classes){
+        appendButton(tabs,c.type_name,()=>{
+          state.category=c.type_name;state.typeId=String(c.type_id);
+          state.page=1;updateCategories();loadList();
+        },String(c.type_id)===state.typeId);
+      }
+      return;
+    }
     ['全部','电影','电视剧','国产剧','美剧','短剧','动漫','综艺'].forEach(key=>{
       appendButton(tabs,key,()=>{state.category=key;state.page=1;updateCategories();loadList();},state.category===key);
     });
   }
   async function loadCategories(){
     const req=++state.sequence;
+    if(isCctv()){
+      showMsg('正在读取央视官方分类…');state.classes=[];
+      try{
+        const classes=await window.CctvBrowse.categories();
+        if(req!==state.sequence)return;
+        state.classes=classes.filter(c=>!window.LibreContentPolicy?.isAdultCategory(c.type_name));
+        state.category='纪录片';
+      }catch(e){
+        if(req!==state.sequence)return;
+        showMsg('央视分类暂时不可用，请稍后重试。');return;
+      }
+      updateCategories();loadList();return;
+    }
     showMsg('正在读取影视源分类…');state.classes=[];
     try{
       const context=getApiSearchContext(state.source);
@@ -93,14 +126,36 @@
       card.appendChild(img);
       card.appendChild(node('span','lt-explore-card-title',item.vod_name||'未命名'));
       card.appendChild(node('span','lt-explore-card-meta',(item.type_name||'')+' · '+(item.vod_year||'')+' · '+(item.vod_remarks||'')));
-      card.addEventListener('click',()=>{if(typeof showDetails==='function')showDetails(id,item.vod_name,sourceId);});
+      card.addEventListener('click',()=>{
+        if(window.CctvBrowse?.isSource(sourceId))window.CctvBrowse.openDetail(item);
+        else if(typeof showDetails==='function')showDetails(id,item.vod_name,sourceId);
+      });
       box.appendChild(card);
     }
     if(!box.children.length)box.appendChild(node('p','lt-explore-empty','当前分类没有可显示的影片，可切换分类或影视源。'));
   }
+  async function loadCctvList(){
+    const req=++state.sequence;
+    const box=$('ltBrowseCards');box.replaceChildren(node('p','lt-explore-empty','正在读取央视节目…'));
+    showMsg('央视官方动态片源 · '+state.category+' · 官方播放页观看');
+    try{
+      const data=await window.CctvBrowse.list(state.typeId||'work:documentary',state.page);
+      if(req!==state.sequence)return;
+      state.pagecount=data.pagecount;
+      renderCards(data.list);
+      showMsg('央视大全 · '+state.category+' · 第'+state.page+'页（'+data.list.length+'条）· 点击作品查看选集');
+    }catch(e){
+      if(req!==state.sequence)return;
+      box.replaceChildren(node('p','lt-explore-empty','央视数据暂时不可用，请稍后重试。'));
+      showMsg(e.message||'央视接口读取失败');
+    }
+    $('ltPrevPage').disabled=state.page<=1;
+    $('ltNextPage').disabled=state.page>=state.pagecount;
+  }
   function leafCategories(parentId){ return window.LibreCatalog.childIds(state.classes,parentId); }
   function requestedCategories(){ return window.LibreCatalog.categoryIds(state.classes,state.typeId); }
   async function loadList(){
+    if(isCctv())return loadCctvList();
     const req=++state.sequence;
     const box=$('ltBrowseCards');box.replaceChildren();
     box.appendChild(node('p','lt-explore-empty','正在汇总子分类片单…'));
