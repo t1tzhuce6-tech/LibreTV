@@ -77,7 +77,7 @@
         if (!context) return [];
         const controller = new AbortController();
         // One time budget for the source, including the two fallback pages.
-        const timer = setTimeout(() => controller.abort(), 6500);
+        const timer = setTimeout(() => controller.abort(), source==='cctv_official'?15000:6500);
         try {
             for (let page=1;page<=3;page++) {
                 const suffix=page===1
@@ -85,8 +85,9 @@
                     :API_CONFIG.search.pagePath
                         .replace('{query}',encodeURIComponent(request.title))
                         .replace('{page}',String(page));
-                const url=await window.ProxyAuth.addAuthToProxyUrl(
-                    PROXY_URL+encodeURIComponent(context.apiBaseUrl+suffix));
+                const url=source==='cctv_official'?
+                    context.apiBaseUrl+suffix:
+                    await window.ProxyAuth.addAuthToProxyUrl(PROXY_URL+encodeURIComponent(context.apiBaseUrl+suffix));
                 const response=await fetch(url,{signal:controller.signal});
                 if(!response.ok)break;
                 const data=await response.json();
@@ -143,6 +144,12 @@
         list.hidden = false;
         const items = versions ? groups(session.items).map(group => group[0]) : session.items;
         for (const item of items) {
+            if(item.source_code==='cctv_official' && /^https:\/\/tv\.cctv\.com\/\d{4}\/\d{2}\/\d{2}\/VIDE[A-Za-z0-9]+\.shtml$/.test(item.vod_official_url||'')){
+                const link=document.createElement('a');link.href=item.vod_official_url;
+                link.target='_blank';link.rel='noopener noreferrer';
+                link.textContent='🌟央视官网观看：'+(item.vod_name||'节目');
+                list.appendChild(link);continue;
+            }
             const button = document.createElement('button');
             const info = identity(item);
             button.type = 'button';
@@ -168,6 +175,8 @@
         return detail;
     }
     async function select(item, session, resume = session.history) {
+        // CCTV catalog results are official webpages, not independently playable media.
+        if(item.source_code==='cctv_official')throw new Error('央视源需要在官网观看；请使用下方央视官网链接。');
         const token = requestToken;
         const detail = await detailFor(item);
         const videoInfo=detail.videoInfo||{};

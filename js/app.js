@@ -1179,6 +1179,7 @@ window.cancelMovieSourceSpeedChecks = () => {
 
 // 显示详情 - 修改为支持自定义API
 async function showDetails(id, vod_name, sourceCode) {
+    if (window.CctvSource?.isOfficial(sourceCode)) return window.CctvSource.openDetail(id, vod_name);
     // 密码保护校验
     if (window.isPasswordProtected && window.isPasswordVerified) {
         if (window.isPasswordProtected() && !window.isPasswordVerified()) {

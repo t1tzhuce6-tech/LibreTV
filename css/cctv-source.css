@@ -1,0 +1,10 @@
+/* Official CCTV episode choices inside LibreTV's existing detail modal. */
+.cctv-official-episodes{padding:6px 0 16px;color:#eef8f0}
+.cctv-official-hint{font-size:.93rem;line-height:1.6;color:#d8efdc;
+  background:#153628;border:1px solid #376e4c;border-radius:11px;padding:12px 15px;margin-bottom:14px}
+.cctv-official-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.cctv-official-episode{border:1px solid #447357;border-radius:10px;background:#1d3c2a;
+  padding:11px 12px;text-decoration:none;color:#fff;font-size:.92rem;line-height:1.5;overflow-wrap:anywhere}
+.cctv-official-episode:hover,.cctv-official-episode:focus-visible{
+  background:#28623d;border-color:#9be3b3;outline:2px solid #9be3b3;outline-offset:1px}
+@media(max-width:540px){.cctv-official-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}}
