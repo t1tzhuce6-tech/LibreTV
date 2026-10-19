@@ -1,4 +1,4 @@
-const APP_VERSION = '20261018-potplayer-preview-v1';
+const APP_VERSION = '20261019-hls-relay-v1';
 const APP_SHELL_CACHE = `libretv-shell-${APP_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

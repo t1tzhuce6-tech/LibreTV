@@ -22,7 +22,15 @@
 
     function protocolUrl(value) {
         const url = directMediaUrl(value);
-        return url ? 'potplayer://' + url : null;
+        if (!url) return null;
+        // Only this previously verified CDN goes through the local, loopback-only HLS relay.
+        // All other media URLs retain their original PotPlayer hand-off path.
+        const parsed = new URL(url);
+        if (parsed.hostname.toLowerCase() === 'play.maoyanplay.top' && parsed.pathname.endsWith('.m3u8')) {
+            const token = root.btoa(url).split('+').join('-').split('/').join('_').replace(/=+$/, '');
+            return 'potplayer://http://127.0.0.1:18755/r/' + token + '/stream.m3u8';
+        }
+        return 'potplayer://' + url;
     }
 
     function launch(value) {

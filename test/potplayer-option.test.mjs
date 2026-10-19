@@ -8,7 +8,7 @@ const js=fs.readFileSync(root+'js/potplayer-launch.js','utf8');
 function browser(userAgent='Mozilla/5.0 (Windows NT 10.0; Win64; x64)'){
   const links=[];
   const body={appendChild(el){links.push(el)}};
-  const window={navigator:{userAgent},document:{body,createElement(){
+  const window={navigator:{userAgent},btoa:s=>Buffer.from(s,'latin1').toString('base64'),document:{body,createElement(){
     const el={style:{},setAttribute(){},click(){el.clicked=true},remove(){el.removed=true}};return el;
   }}};
   vm.runInNewContext(js,{window,URL});
@@ -50,4 +50,17 @@ test('external play refuses page links, local network, unsafe schemes and mobile
  assert.equal(mobile.api.isWindows(),false);
  assert.equal(mobile.api.launch('https://cdn.example.org/movie.mp4').ok,false);
  assert.equal(mobile.links.length,0);
+});
+
+test('maoyanplay encrypted HLS uses the verified loopback relay; unrelated links remain direct',()=>{
+ const {api,links}=browser();
+ const src='https://play.maoyanplay.top/20250905/Mf7CJJUU/index.m3u8';
+ const relayed=api.protocolUrl(src);
+ assert.ok(relayed.startsWith('potplayer://http://127.0.0.1:18755/r/'));
+ assert.ok(relayed.endsWith('/stream.m3u8'));
+ const encoded=relayed.slice('potplayer://http://127.0.0.1:18755/r/'.length,-'/stream.m3u8'.length);
+ assert.equal(Buffer.from(encoded,'base64url').toString('utf8'),src);
+ assert.equal(api.launch(src).ok,true);
+ assert.equal(links[0].href,relayed);
+ assert.equal(api.protocolUrl('https://other.example.org/movie.m3u8'),'potplayer://https://other.example.org/movie.m3u8');
 });
