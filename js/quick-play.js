@@ -100,11 +100,12 @@
         }catch{return [];}finally{clearTimeout(timer);}
     }
     async function discover(session) {
-        if(session.request.scope==='safe-all')
-            await window.LibreProfiles?.refresh?.();
         const selected = read('selectedAPIs', DEFAULT_SELECTED_APIS);
-        const broaden = session.request.scope === 'safe-all';
-        const eligible = window.LibreContentPolicy?.safeSourceIds?.(broaden) || selected;
+        const rankScoped=session.request.scope==='rank-selected';
+        const broaden = ['safe-all','rank-selected'].includes(session.request.scope);
+        const eligible = rankScoped && window.LibreRankSources
+            ? window.LibreRankSources.selected()
+            : window.LibreContentPolicy?.safeSourceIds?.(broaden) || selected;
         const sources = [...new Set(eligible)].filter(source => {
             const info = source.startsWith('custom_')
                 ? getCustomApiInfo(source.slice(7)) : API_SITES[source];
@@ -113,7 +114,7 @@
         });
         // Cache observed quality once; avoid repeated localStorage reads while sorting.
         const scores=new Map(sources.map(id=>[id,window.LibreExperience?.qualityScore?.(id)||0]));
-        sources.sort((a,b)=>scores.get(b)-scores.get(a));
+        if(!rankScoped)sources.sort((a,b)=>scores.get(b)-scores.get(a));
         session.poolStats={total:sources.length,checked:0,matched:0};
         let next = 0;
         await Promise.all(Array.from({ length: Math.min(4, sources.length) }, async () => {
@@ -235,7 +236,9 @@
         let confirmed = false;
         const preferred = session.history;
         if (!request.id && preferred?.sourceName && preferred?.vod_id) { request.id = preferred.vod_id; request.source = preferred.sourceName; }
-        const permitted=window.LibreContentPolicy?.safeSourceIds?.(request.scope==='safe-all')
+        const permitted=request.scope==='rank-selected' && window.LibreRankSources
+            ?window.LibreRankSources.selected()
+            :window.LibreContentPolicy?.safeSourceIds?.(request.scope==='safe-all')
             ||read('selectedAPIs',DEFAULT_SELECTED_APIS);
         // A stale playback-history entry must not silently reintroduce a blocked source.
         if(request.source && !permitted.includes(request.source)){request.source='';request.id='';}

@@ -2759,9 +2759,11 @@ async function showSwitchResourceModal() {
     modal.classList.remove('hidden');
 
     // Load the latest subscription (or its cache) before enumerating the full pool.
-    await window.LibreProfiles?.refresh?.();
     if(probeController.signal.aborted)return;
-    const candidateIds=window.LibreContentPolicy?.safeSourceIds?.(true)||selectedAPIs;
+    const rankScoped=new URLSearchParams(location.search).get('scope')==='rank-selected';
+    const candidateIds=rankScoped && window.LibreRankSources
+        ? window.LibreRankSources.selected()
+        : window.LibreContentPolicy?.safeSourceIds?.(true)||selectedAPIs;
     const resourceOptions = candidateIds.map((curr) => {
         if (API_SITES[curr]) {
             return { key: curr, name: API_SITES[curr].name };

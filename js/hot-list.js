@@ -77,7 +77,7 @@
       if(item.subtitle||item.year)card.appendChild(el('span','lt-rank-subtitle',item.year||item.subtitle));
       card.addEventListener('click',()=>{
         if(!window.QuickPlay?.open){setStatus('播放器暂不可用，请刷新页面后重试。');return;}
-        window.QuickPlay.open({title:item.title,kind:item.kind==='movie'?'movie':'tv'});
+        window.QuickPlay.open({title:item.title,kind:item.kind==='movie'?'movie':'tv',scope:'rank-selected'});
       });
       frag.appendChild(card);
     });
@@ -234,7 +234,7 @@
     const source=el('a','', '数据：豆瓣热门推荐 / LibreTV 官方周榜');
     source.href='https://github.com/LibreSpark/LibreTV/wiki/Recommendations';
     source.target='_blank';source.rel='noopener noreferrer';
-    credits.append(source,' · 播放使用当前方案中已选的片源');
+    credits.append(source,' · 播放使用热榜页面勾选的合格片源');
     body.append(bar,status,cards,more,credits);
     if('IntersectionObserver' in window){
       const observer=new IntersectionObserver(entries=>{
@@ -264,6 +264,7 @@
       new MutationObserver(observe).observe(results,{attributes:true,attributeFilter:['class']});
       observe();
     }
+    window.LibreRankSources?.initPanel();
     const saved=read(boardKey);
     if([...charts,...longBoards].some(c=>c.id===saved))current=saved;
     if(read('libretv:long-browse-introduced')!=='yes'){

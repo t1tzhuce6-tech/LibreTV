@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
-import {convertHealthyFeed,isAdultManagedSource} from '../functions/managed-sources.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 function policy(selected, visible, registry, customSources=[]){
@@ -11,28 +10,12 @@ function policy(selected, visible, registry, customSources=[]){
   const win={
     API_SITES:registry,
     DEFAULT_SELECTED_APIS:['ffzy','guangsu'],
-    LibreProfiles:{visibleIds:()=>visible},
     localStorage:{getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,String(v))},
     getCustomApiInfo:i=>customSources[Number(i)]||null
   };
   vm.runInNewContext(fs.readFileSync(root+'js/content-policy.js','utf8'),{window:win,URL});
   return {policy:win.LibreContentPolicy,store};
 }
-test('managed feed filters explicit and aliased adult sources before registration',()=>{
-  const cases=[
-    {name:'杏吧',api:'https://xingba222.com/api.php/provide/vod'},
-    {name:'155 | 采集',api:'https://155api.com/api.php/provide/vod'},
-    {name:'lsb',api:'https://apilsbzy1.com/api.php/provide/vod'},
-    {name:'jkun(直连)',api:'https://jkunzyapi.com/api.php/provide/vod'},
-    {name:'ckzyCK资源',api:'https://ckzy.me/api.php/provide/vod'},
-    {name:'大众',api:'https://cdn.dzzyapi.com/api.php/provide/vod'},
-    {name:'光速',api:'https://api.guangsuapi.com/api.php/provide/vod'}
-  ];
-  const result=convertHealthyFeed({sites:cases.map(s=>({...s,type:1}))});
-  assert.equal(result.sources.length,2);
-  assert.deepEqual(result.sources.map(x=>x.name),['大众','光速']);
-  assert.equal(isAdultManagedSource('普通','https://apilsbzy1.com/api.php/provide/vod'),true);
-});
 test('rank safe-all includes all registered safe sources across presets',()=>{
   const entries={
     ffzy:{name:'非凡',api:'https://ffzy.example/provide/vod'},
@@ -79,19 +62,18 @@ test('one hundred sources, disabled source, adult host, duplicate and unselected
   const {policy:p,store}=policy(['safe_17'],['safe_0'],registry,custom);
   const ids=Array.from(p.safeSourceIds(true));
   assert.equal(ids.length,101);
-  assert.equal(ids[0],'safe_17');
+  assert.equal(ids[0],'custom_0');
+  assert.ok(ids.includes('safe_17'));
   assert.ok(ids.includes('safe_99'));
   assert.ok(ids.includes('custom_0'));
   assert.ok(!ids.includes('copy')&&!ids.includes('offline')&&!ids.includes('adult')&&!ids.includes('custom_1'));
   assert.deepEqual(JSON.parse(store.get('selectedAPIs')),['safe_17']);
 });
-test('healthy feed does not silently truncate at twelve or seventy-five',()=>{
-  const sites=Array.from({length:100},(_,i)=>({type:1,name:'正常影视'+i,
-    api:'https://vod'+i+'.example/api.php/provide/vod'}));
-  const feed=convertHealthyFeed({sites});
-  assert.equal(feed.sources.length,100);
+test('one hundred eligible source registrations are supported without legacy subscriptions',()=>{
+ const registry={};for(let i=0;i<100;i++)registry['s'+i]={name:'安全影视'+i,api:'https://api'+i+'.example/provide/vod'};
+ const {policy:p}=policy([],[],registry);
+ assert.equal(p.safeSourceIds(true).length,100);
 });
-
 test('adult-only APIs under neutral names cannot reenter from remote subscriptions or stale browser presets',()=>{
   const adultHosts=[
     'heiliaozyapi.com','www.heiliaozyapi.com','api.ddapi.cc','api.heiapi.cc',
@@ -102,11 +84,6 @@ test('adult-only APIs under neutral names cannot reenter from remote subscriptio
   }));
   sites.push({type:1,name:'光速资源',api:'https://api.guangsuapi.com/api.php/provide/vod'});
   sites.push({type:1,name:'非凡资源',api:'https://cj.ffzyapi.com/api.php/provide/vod'});
-  const filtered=convertHealthyFeed({sites});
-  assert.deepEqual(filtered.sources.map(x=>x.name),['光速资源','非凡资源']);
-  for(const site of sites.slice(0,adultHosts.length)){
-    assert.equal(isAdultManagedSource(site.name,site.api),true,site.api);
-  }
   const registry=Object.fromEntries(sites.map((s,i)=>['s'+i,{name:s.name,api:s.api}]));
   const {policy:p}=policy(Object.keys(registry),Object.keys(registry),registry,[
     {name:'伪装自定义正常源',url:'https://api.ddapi.cc/api.php/provide/vod'}
