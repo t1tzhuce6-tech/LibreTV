@@ -103,6 +103,9 @@ test('verified customer API sources are available and invalid placeholders are r
   assert.equal(window.API_SITES.hhzy.api, 'https://hhzyapi.com/api.php/provide/vod');
   assert.equal(window.API_SITES.p2100.api, 'https://p2100.net/api.php/provide/vod');
   assert.equal(window.API_SITES.uku.api, 'https://api.ukuapi88.com/api.php/provide/vod');
+  assert.equal(window.API_SITES.niuniu.api, 'https://api.niuniuzy.me/api.php/provide/vod/');
+  assert.equal(window.API_SITES.subozy.api, 'https://subocj.com/api.php/provide/vod/');
+  assert.equal(window.API_SITES.haohuav2.api, 'https://haohuazy.com/api.php/provide/vod/');
   for (const id of ['ckzy', 'jkun', 'bwzy', 'r155', 'huangcang', 'yutu', 'siwa']) {
     assert.equal(window.API_SITES[id], undefined, 'confirmed adult source must be removed: '+id);
   }
